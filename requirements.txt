@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pydantic
+google-generativeai
+python-dotenv
+ffmpeg-python
+modal
+httpx
+loguru
+celery[redis]
+redis

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audibound Studio</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f4f4f9; }
+        h1 { color: #333; }
+        .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        input, textarea, button { width: 100%; padding: 10px; margin-bottom: 10px; box-sizing: border-box; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .status { font-weight: bold; color: #555; }
+        .actions { display: flex; gap: 10px; }
+        .actions button { width: auto; }
+    </style>
+</head>
+<body>
+    <h1>Audibound Studio</h1>
+    
+    <div class="card">
+        <h2>New Project</h2>
+        <input type="text" id="title" placeholder="Project Title">
+        <textarea id="text" rows="5" placeholder="Paste story text here..."></textarea>
+        <button onclick="createProject()">Create Project</button>
+    </div>
+
+    <div id="projects">
+        <!-- Project list will go here -->
+    </div>
+
+    <script>
+        const API_URL = ""; // Relative path
+
+        async function createProject() {
+            const title = document.getElementById('title').value;
+            const text = document.getElementById('text').value;
+            
+            const res = await fetch(`${API_URL}/projects`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, text })
+            });
+            
+            if (res.ok) {
+                const data = await res.json();
+                alert(`Project Created: ${data.project_id}`);
+                loadProject(data.project_id);
+            } else {
+                alert("Error creating project");
+            }
+        }
+
+        async function loadProject(projectId) {
+            const res = await fetch(`${API_URL}/projects/${projectId}`);
+            const p = await res.json();
+            
+            const html = `
+                <div class="card">
+                    <h3>${projectId}</h3>
+                    <p>Status: <span class="status">${p.status}</span></p>
+                    <div class="actions">
+                        <button onclick="triggerAction('${projectId}', 'direct')">Direct Script (Gemini)</button>
+                        <button onclick="triggerAction('${projectId}', 'produce')">Produce Audio (Kokoro)</button>
+                        <button onclick="checkStatus('${projectId}')">Refresh Status</button>
+                    </div>
+                    ${p.manifest ? '<p>✅ Manifest Ready</p>' : ''}
+                    ${p.status === 'produced' ? '<p>🎉 <a href="#">Download M4B (Check Output Dir)</a></p>' : ''}
+                </div>
+            `;
+            document.getElementById('projects').innerHTML = html + document.getElementById('projects').innerHTML;
+        }
+
+        async function triggerAction(projectId, action) {
+            const res = await fetch(`${API_URL}/projects/${projectId}/${action}`, { method: 'POST' });
+            if (res.ok) {
+                alert(`${action} started!`);
+                checkStatus(projectId);
+            } else {
+                alert(`Failed to start ${action}`);
+            }
+        }
+
+        async function checkStatus(projectId) {
+            // Reload the specific project card (simplified: just reload page or re-fetch)
+            // For MVP, let's just re-render the whole list or just that item.
+            // We'll just re-call loadProject which prepends, so clear list first in real app.
+            // Here we just alert new status
+            const res = await fetch(`${API_URL}/projects/${projectId}`);
+            const p = await res.json();
+            alert(`Current Status: ${p.status}`);
+        }
+    </script>
+</body>
+</html>
