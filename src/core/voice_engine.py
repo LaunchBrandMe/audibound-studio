@@ -28,7 +28,20 @@ class KokoroProvider(VoiceProvider):
             print(f"[VoiceEngine] Response Status: {response.status_code}")
             response.raise_for_status()
             content = response.content
-            print(f"[VoiceEngine] Received {len(content)} bytes from Modal.")
+            
+            # Validate audio data
+            if len(content) < 100:
+                print(f"[VoiceEngine] Response too small: {len(content)} bytes")
+                print(f"[VoiceEngine] Content: {content}")
+                raise ValueError(f"Audio response too small ({len(content)} bytes), likely an error")
+            
+            # Check if it's actually a WAV file (starts with RIFF header)
+            if not content.startswith(b'RIFF'):
+                print(f"[VoiceEngine] WARNING: Response doesn't look like a WAV file")
+                print(f"[VoiceEngine] First 100 bytes: {content[:100]}")
+                raise ValueError("Invalid audio format received from TTS service")
+            
+            print(f"[VoiceEngine] Received {len(content)} bytes")
             return content
 
 class ElevenLabsProvider(VoiceProvider):

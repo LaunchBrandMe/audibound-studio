@@ -119,10 +119,20 @@ class ScriptDirector:
         
         Rules:
         1. Break the text into 'blocks'. A block is usually a sentence of dialogue or a distinct sound event.
-        2. For Dialogue: Identify the speaker from the Bible. Assign a 'voice_id' (use the character name as a placeholder if unknown) and 'style' (emotion).
-        3. For Narration: Use "Narrator" as the speaker.
-        4. SFX: Insert SFX blocks where actions occur (e.g., "door slams", "footsteps").
-        5. Music: Insert Music blocks to set the mood.
+        2. For Dialogue/Narration: 
+           - Identify the speaker from the Bible (or use "Narrator" for narrative text)
+           - **CRITICAL**: Include the EXACT TEXT from the scene in the "text" field
+           - Set "speaker" to the character name
+           - Set "style" to describe the emotion/delivery
+           - Example: {{"type": "dialogue", "speaker": "John", "text": "Hello, how are you?", "style": "cheerful"}}
+        3. SFX: Insert SFX blocks where actions occur (e.g., "door slams", "footsteps")
+           - Set "action" or "effect" to describe the sound
+           - Example: {{"type": "sfx", "effect": "door slams"}}
+        4. Music: Insert Music blocks to set the mood
+           - Set "cue" or "action" to describe the music
+           - Example: {{"type": "music", "cue": "suspenseful strings"}}
+        
+        **IMPORTANT**: For dialogue and narration blocks, you MUST copy the actual words from the scene text into the "text" field. Do NOT leave it empty!
         
         Output valid JSON matching the Scene schema.
         
@@ -132,13 +142,23 @@ class ScriptDirector:
         
         response = self.model.generate_content(prompt)
         
+        print(f"[Director] Raw Gemini scene response: {response.text[:500]}...")
+        
         try:
             data = json.loads(response.text)
         
             # Normalization for Gemini 2.5 quirks
             
-            # 0. Handle list output (sometimes returns [scene])
+            # 0a. Handle bare array (Gemini returned just the blocks, not a Scene object)
             if isinstance(data, list):
+                print(f"[Director] Gemini returned bare array of blocks, wrapping in Scene structure")
+                data = {
+                    "setting": "Scene",
+                    "blocks": data
+                }
+            
+            # 0b. Handle nested list output (sometimes returns [scene])
+            elif isinstance(data, list):
                 if len(data) > 0 and isinstance(data[0], dict):
                     data = data[0]
                 else:
@@ -171,13 +191,27 @@ class ScriptDirector:
                 # Map Content based on 'type'
                 b_type = block.get('type', '').lower()
                 
-                if b_type == 'dialogue':
+                # FALLBACK: If no type, infer from content
+                if not b_type:
+                    if block.get('line') or block.get('text') or block.get('voice_id') or block.get('voiceId') or block.get('speaker'):
+                        b_type = 'dialogue'
+                    elif block.get('effect') or block.get('action'):
+                        b_type = 'sfx'
+                    elif block.get('cue') or block.get('styleDescription'):
+                        b_type = 'music'
+                
+                if b_type in ['dialogue', 'narration']:
+                    text_content = block.get('line') or block.get('text') or ''
                     abml_block['narration'] = {
-                        "speaker": block.get('voice_id') or block.get('voiceId') or 'Narrator',
-                        "text": block.get('line') or block.get('text') or '',
+                        "speaker": block.get('speaker') or block.get('voice_id') or block.get('voiceId') or 'Narrator',
+                        "text": text_content,
                         "style": block.get('style'),
                         "enabled": True
                     }
+                    if text_content:
+                        print(f"[Director] Block {b_id}: Added narration text (first 50 chars): {text_content[:50]}...")
+                    else:
+                        print(f"[Director] WARNING: Block {b_id} has NO TEXT!")
                 elif b_type == 'sfx':
                     abml_block['sfx'] = {
                         "description": block.get('action') or block.get('effect') or block.get('description') or "SFX",
