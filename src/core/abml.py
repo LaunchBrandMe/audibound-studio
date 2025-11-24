@@ -6,6 +6,7 @@ class CharacterProfile(BaseModel):
     name: str = Field(..., description="Name of the character")
     description: str = Field(..., description="Physical and personality description")
     voice_ref: str = Field(..., description="Description of the voice (e.g., 'Gruff, Scottish, Deep')")
+    gender: Optional[str] = Field(None, description="Character gender: 'male', 'female', 'neutral', or 'unknown'")
     voice_provider_id: Optional[str] = Field(None, description="ID of the specific voice model to use")
 
     class Config:

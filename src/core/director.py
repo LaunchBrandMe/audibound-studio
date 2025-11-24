@@ -3,6 +3,7 @@ import json
 import google.generativeai as genai
 from typing import List, Optional
 from src.core.abml import SeriesBible, Scene, ScriptManifest, CharacterProfile
+from src.core.validator import validate_and_log
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -32,6 +33,11 @@ class ScriptDirector:
         1. Name
         2. Physical/Personality Description
         3. Voice Reference (e.g., "Deep, raspy, British accent, similar to Alan Rickman")
+        4. Gender - IMPORTANT: Explicitly determine the character's gender:
+           - "male" for male characters (he/him, father, brother, son, man, boy, etc.)
+           - "female" for female characters (she/her, mother, sister, daughter, woman, girl, etc.)
+           - "neutral" for non-binary or gender-neutral narrators
+           - "unknown" if genuinely unclear from the text
         
         Also provide global notes on the tone/atmosphere.
         
@@ -79,6 +85,12 @@ class ScriptDirector:
                     char['description'] = char.pop('PhysicalDescription')
                 elif 'Description' in char:
                     char['description'] = char.pop('Description')
+                
+                # Normalize gender
+                if 'Gender' in char:
+                    char['gender'] = char.pop('Gender').lower()
+                elif 'gender' not in char:
+                    char['gender'] = None  # Will be inferred by VoiceMapper
             
             # Ensure characters list is set correctly in data
             data['characters'] = characters
@@ -109,32 +121,74 @@ class ScriptDirector:
         bible_context = bible.model_dump_json()
         
         prompt = f"""
-        You are an expert Audio Drama Director.
+        You are an expert Audio Drama Director extracting clean dialogue and narration.
         
         Context (Series Bible):
         {bible_context}
         
         Task:
-        Convert the following scene text into a structured Audio Script (ABML).
+        Convert the following scene text into structured Audio Script (ABML).
         
-        Rules:
-        1. Break the text into 'blocks'. A block is usually a sentence of dialogue or a distinct sound event.
-        2. For Dialogue/Narration: 
-           - Identify the speaker from the Bible (or use "Narrator" for narrative text)
-           - **CRITICAL**: Include the EXACT TEXT from the scene in the "text" field
-           - Set "speaker" to the character name
-           - Set "style" to describe the emotion/delivery
-           - Example: {{"type": "dialogue", "speaker": "John", "text": "Hello, how are you?", "style": "cheerful"}}
-        3. SFX: Insert SFX blocks where actions occur (e.g., "door slams", "footsteps")
-           - Set "action" or "effect" to describe the sound
-           - Example: {{"type": "sfx", "effect": "door slams"}}
-        4. Music: Insert Music blocks to set the mood
-           - Set "cue" or "action" to describe the music
-           - Example: {{"type": "music", "cue": "suspenseful strings"}}
+        **CRITICAL RULES - READ CAREFULLY**:
         
-        **IMPORTANT**: For dialogue and narration blocks, you MUST copy the actual words from the scene text into the "text" field. Do NOT leave it empty!
+        1. DIALOGUE EXTRACTION:
+           ❌ WRONG: {{"text": "Sarah shouted excitedly, 'I got the callback!'"}}
+           ✅ RIGHT: {{"text": "I got the callback!", "style": "excited"}}
+           
+           ❌ WRONG: {{"text": "she said quietly"}}
+           ✅ RIGHT: {{"text": "[actual dialogue]", "style": "quiet"}}
+           
+           Rules:
+           - Extract ONLY words inside quotation marks
+           - NEVER include: "said", "shouted", "whispered", "exclaimed", "asked", "replied"
+           - Move emotion/delivery to "style" field
         
-        Output valid JSON matching the Scene schema.
+        2. NARRATION EXTRACTION:
+           ❌ WRONG: {{"text": "Maya sighed heavily, sinking into the couch"}}
+           ✅ RIGHT: {{"text": "Maya sank into the couch.", "style": "weary"}}
+           
+           Rules:
+           - Remove emotion adverbs (heavily, quietly, angrily)
+           - Move emotions to "style" field
+           - Keep only clean action descriptions
+        
+        3. STYLE FIELD:
+           Use these exact words when appropriate:
+           - "excited", "cheerful", "happy", "joyful"
+           - "sad", "somber", "melancholy", "weary"  
+           - "angry", "furious", "harsh"
+           - "whispering", "quiet", "soft"
+           - "urgent", "rushed", "hurried"
+           - Leave empty if neutral tone
+        
+        4. OUTPUT FORMAT:
+           For dialogue: {{"type": "dialogue", "speaker": "Name", "text": "clean dialogue only", "style": "emotion"}}
+           For narration: {{"type": "narration", "speaker": "Narrator", "text": "clean description", "style": "emotion"}}
+           For SFX: {{"type": "sfx", "effect": "door slams"}}
+           For music: {{"type": "music", "cue": "suspenseful strings"}}
+        
+        **EXAMPLES**:
+        
+        Input: 'Sarah burst through the door. "I got it!" she shouted excitedly.'
+        Output:
+        [
+          {{"type": "narration", "speaker": "Narrator", "text": "Sarah burst through the door."}},
+          {{"type": "dialogue", "speaker": "Sarah", "text": "I got it!", "style": "excited"}}
+        ]
+        
+        Input: 'Tom sighed heavily. "This is terrible," he whispered.'  
+        Output:
+        [
+          {{"type": "narration", "speaker": "Narrator", "text": "Tom sighed.", "style": "weary"}},
+          {{"type": "dialogue", "speaker": "Tom", "text": "This is terrible.", "style": "whispering"}}
+        ]
+        
+        **REMEMBER**: 
+        - NO "said/shouted/whispered" in text!
+        - Clean dialogue ONLY!
+        - Emotions go in "style" field!
+        
+        Output valid JSON matching Scene schema.
         
         Scene Text:
         {scene_text}
@@ -230,8 +284,19 @@ class ScriptDirector:
             data['blocks'] = new_blocks
             
             # Inject the scene_id if the LLM generated a random one or to enforce consistency
-            data['scene_id'] = scene_id 
-            return Scene(**data)
+            data['scene_id'] = scene_id
+            
+            # Create scene object
+            scene = Scene(**data)
+            
+            # Validate ABML quality
+            validation_result = validate_and_log(scene, scene_id)
+            
+            # Log warning if quality is poor (but still return scene)
+            if not validation_result.is_passing():
+                print(f"[Director] ⚠️  Scene quality below threshold but proceeding anyway")
+            
+            return scene
         except Exception as e:
             print(f"Error parsing Scene: {e}")
             print(f"Raw response: {response.text}")

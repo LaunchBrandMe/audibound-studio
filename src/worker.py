@@ -6,6 +6,7 @@ from src.core.voice_engine import get_voice_provider
 from src.core.assembly import AudioAssembler
 from src.core.music_engine import get_music_provider
 from src.core.sfx_engine import get_sfx_provider
+from src.core.text_cleaner import clean_text_if_needed
 import asyncio
 import json
 
@@ -95,6 +96,11 @@ async def run_production_pipeline_async(project_id: str):
     # Reconstruct Manifest object from dict
     manifest = ScriptManifest(**project["manifest"])
     
+    # Initialize voice mapper with the Series Bible
+    from src.core.voice_mapper import VoiceMapper
+    voice_mapper = VoiceMapper(manifest.bible)
+    print(f"[Worker] Voice mappings: {voice_mapper.get_all_mappings()}")
+    
     output_dir = os.path.join("outputs", project_id)
     temp_dir = os.path.join(output_dir, "temp")
     os.makedirs(temp_dir, exist_ok=True)
@@ -111,14 +117,31 @@ async def run_production_pipeline_async(project_id: str):
             print(f"[Worker] Checking Block {j} (ID: {block.id}): Narration={block.narration is not None}")
             if block.narration:
                 try:
-                    voice_id = block.narration.voice_id or "af"
-                    style = block.narration.style  # Extract emotional style from ABML
+                    # Use VoiceMapper to get character-specific voice
+                    speaker_name = block.narration.speaker
+                    voice_id = block.narration.voice_id or voice_mapper.get_voice_for_speaker(speaker_name)
+                    
+                    print(f"[Worker] Block {block.id}: Speaker '{speaker_name}' → Voice '{voice_id}'")
+                    
+                    # IMPORTANT: Ignore emotional styles for Narrator (prevents whispering narration)
+                    if speaker_name == "Narrator":
+                        style = None  # Narrator should always be neutral
+                    else:
+                        style = block.narration.style  # Characters can have emotional styles
+                    
+                    raw_text = block.narration.text
+                    
+                    # Clean text to remove stage directions
+                    cleaned_text, was_modified = clean_text_if_needed(raw_text, is_dialogue=True)
+                    
+                    if was_modified:
+                        print(f"[Worker] Block {block.id}: Text was cleaned")
                     
                     if style:
                         print(f"[Worker] Generating block {block.id} with style: '{style}'")
                     
                     audio_bytes = await voice_provider.generate_audio(
-                        text=block.narration.text,
+                        text=cleaned_text,  # Use cleaned text
                         voice_id=voice_id,
                         style=style  # Pass style for expressive generation
                     )

@@ -24,7 +24,7 @@ model_volume = modal.Volume.from_name("kokoro-models", create_if_missing=True)
     volumes={"/cache": model_volume},
     timeout=300
 )
-def generate_audio(text: str, voice: str = "af", speed: float = 1.0):
+def generate_audio(text: str, voice: str = "af", speed: float = 1.0, pitch: float = 0.0):
     """
     Generate audio using Kokoro TTS.
     
@@ -32,13 +32,14 @@ def generate_audio(text: str, voice: str = "af", speed: float = 1.0):
         text: Text to synthesize
         voice: Voice code (af=American Female, am=American Male, bf=British Female, bm=British Male)
         speed: Speech speed multiplier
+        pitch: Pitch adjustment (-20 to +20, 0=neutral)
     
     Returns:
         bytes: WAV audio data
     """
     print(f"[Kokoro] === Starting generation ===")
     print(f"[Kokoro] Text: {text[:100]}...")
-    print(f"[Kokoro] Voice: {voice}, Speed: {speed}")
+    print(f"[Kokoro] Voice: {voice}, Speed: {speed}, Pitch: {pitch}")
     
     try:
         from kokoro_onnx import Kokoro
@@ -80,14 +81,23 @@ def generate_audio(text: str, voice: str = "af", speed: float = 1.0):
         # Generate audio
         print(f"[Kokoro] Generating speech with voice: {voice}...")
         
-        # Map simple voice codes to full Kokoro voice names
+        # Map simple voice codes to full Kokoro voice names (for backward compatibility)
+        # Also accept full voice names directly (af_sarah, af_bella, etc.)
         voice_map = {
             "af": "af_sarah",  # American Female
             "am": "am_adam",   # American Male
             "bf": "bf_emma",   # British Female
             "bm": "bm_george"  # British Male
         }
-        kokoro_voice = voice_map.get(voice, "af_sarah")
+        
+        # If voice is already a full Kokoro voice name, use it directly
+        # Otherwise, map short code to full name
+        if voice.startswith(('af_', 'am_', 'bf_', 'bm_')):
+            kokoro_voice = voice  # Already a full voice name
+        else:
+            kokoro_voice = voice_map.get(voice, "af_sarah")  # Map short code
+        
+        print(f"[Kokoro] Using voice: {kokoro_voice}")
         
         # Kokoro.create() returns (samples, sample_rate)
         samples, sample_rate = kokoro.create(
@@ -137,14 +147,15 @@ def generate_speech(item: dict):
     text = item.get("text")
     voice = item.get("voice", "af")  # Default to American Female
     speed = item.get("speed", 1.0)
+    pitch = item.get("pitch", 0.0)  # Extract pitch (for future TTS models, Kokoro ignores it)
     
     if not text:
         print("[Endpoint] ERROR: No text provided")
         return {"error": "No text provided"}
     
     try:
-        # Call the generate function
-        audio_bytes = generate_audio.remote(text, voice, speed)
+        # Call the generate function (pitch is accepted but not used by Kokoro)
+        audio_bytes = generate_audio.remote(text, voice, speed, pitch)
         print(f"[Endpoint] Success! Returning {len(audio_bytes)} bytes")
         
         # Return as WAV file with proper headers

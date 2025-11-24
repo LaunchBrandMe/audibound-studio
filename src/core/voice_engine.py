@@ -14,84 +14,71 @@ class KokoroProvider(VoiceProvider):
     
     def _add_emotion_tags(self, text: str, style: Optional[str]) -> str:
         """
-        Inject Kokoro emotion tags based on style.
-        Kokoro supports tags like <laugh>, <sigh>, etc.
+        (Disabled) Inject Kokoro emotion tags.
+        Currently disabled because tags are being read literally by the model.
         """
-        if not style:
-            return text
-        
-        style_lower = style.lower()
-        
-        # Laughing/Cheerful - add laugh tags
-        if any(word in style_lower for word in ['laugh', 'cheerful', 'happy', 'joyful', 'excited']):
-            # Add laugh before exclamation or at end of sentences
-            text = text.replace('!', ' <laugh>!')
-            if not text.endswith('!'):
-                text = text.rstrip('.') + ' <laugh>.'
-        
-        # Sighing/Sad - add sigh at beginning
-        elif any(word in style_lower for word in ['sigh', 'sad', 'melancholy', 'somber', 'weary']):
-            text = f"<sigh> {text}"
-        
         return text
+
     
     def _get_prosody_params(self, style: Optional[str]) -> dict:
         """
         Map ABML style to Kokoro prosody parameters.
-        Returns speed adjustments based on emotional context.
+        Returns speed and pitch adjustments based on emotional context.
         """
         if not style:
-            return {'speed': 1.0}
+            return {'speed': 1.0, 'pitch': 0.0}
         
         style_lower = style.lower()
         
-        # Whispering: slower, more intimate
+        # Whispering: slower, lower pitch
         if 'whisper' in style_lower or 'quiet' in style_lower:
-            return {'speed': 0.85}
+            return {'speed': 0.85, 'pitch': -5}
         
-        # Shouting/Angry: faster, more intense
+        # Shouting/Angry: faster, higher pitch
         elif any(word in style_lower for word in ['shout', 'yell', 'angry', 'furious']):
-            return {'speed': 1.2}
+            return {'speed': 1.2, 'pitch': 8}
         
-        # Excited/Urgent: faster
+        # Excited/Urgent: faster, higher pitch
         elif any(word in style_lower for word in ['excit', 'urgent', 'hurried', 'rushed']):
-            return {'speed': 1.15}
+            return {'speed': 1.15, 'pitch': 5}
         
-        # Sad/Melancholy/Tired: slower
+        # Sad/Melancholy/Tired: slower, lower pitch
         elif any(word in style_lower for word in ['sad', 'melancholy', 'tired', 'weary', 'somber']):
-            return {'speed': 0.9}
+            return {'speed': 0.9, 'pitch': -6}
         
-        # Cheerful/Happy: slightly faster
+        # Cheerful/Happy: slightly faster, slightly higher pitch
         elif any(word in style_lower for word in ['cheerful', 'happy', 'joyful']):
-            return {'speed': 1.05}
+            return {'speed': 1.05, 'pitch': 3}
         
-        # Default: neutral speed
-        return {'speed': 1.0}
+        # Default: neutral speed and pitch
+        return {'speed': 1.0, 'pitch': 0.0}
 
     async def generate_audio(self, text: str, voice_id: str, speed: float = 1.0, style: Optional[str] = None) -> bytes:
         """
         Calls the Modal.com endpoint to generate audio using Kokoro.
-        Now supports expressive speech via emotion tags and prosody control.
+        Now supports expressive speech via speed and pitch control.
         """
-        # Add emotion tags to text
+        # Add emotion tags to text (currently disabled)
         text_with_emotion = self._add_emotion_tags(text, style)
         
-        # Get prosody adjustments
+        # Get prosody adjustments (speed + pitch)
         prosody = self._get_prosody_params(style)
         
         # Combine base speed with prosody speed
         final_speed = speed * prosody['speed']
+        pitch = prosody['pitch']
         
         async with httpx.AsyncClient() as client:
             payload = {
                 "text": text_with_emotion,
                 "voice": voice_id,
                 "speed": final_speed,
+                "pitch": pitch,  # NEW: Add pitch for expression
                 "style": style  # Pass for logging/future use
             }
             
             if style:
-                print(f"[VoiceEngine] Generating with style '{style}': speed={final_speed:.2f}")
+                print(f"[VoiceEngine] Generating with style '{style}': speed={final_speed:.2f}, pitch={pitch}")
             else:
                 print(f"[VoiceEngine] Requesting audio for voice: {voice_id}...")
             
