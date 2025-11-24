@@ -19,3 +19,11 @@ pymp-*
 *.mp3
 *.m4b
 test_output.wav
+
+# Test files and stories
+*_test_story.md
+test_*.py
+test_*.sh
+minimal_test.md
+simple_dialogue_test.md
+test_emotional_story.md
