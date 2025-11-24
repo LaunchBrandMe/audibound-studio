@@ -111,10 +111,16 @@ async def run_production_pipeline_async(project_id: str):
             print(f"[Worker] Checking Block {j} (ID: {block.id}): Narration={block.narration is not None}")
             if block.narration:
                 try:
-                    voice_id = block.narration.voice_id or "af" 
+                    voice_id = block.narration.voice_id or "af"
+                    style = block.narration.style  # Extract emotional style from ABML
+                    
+                    if style:
+                        print(f"[Worker] Generating block {block.id} with style: '{style}'")
+                    
                     audio_bytes = await voice_provider.generate_audio(
                         text=block.narration.text,
-                        voice_id=voice_id
+                        voice_id=voice_id,
+                        style=style  # Pass style for expressive generation
                     )
                     filename = f"{block.id}_narration.wav"
                     filepath = os.path.join(temp_dir, filename)
