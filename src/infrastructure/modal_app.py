@@ -1,93 +1,124 @@
 import modal
 import io
 
-# Define the image with Coqui TTS
+# Define the image with Kokoro TTS
 image = (
-    modal.Image.debian_slim()
-    .apt_install("libsndfile1", "espeak-ng")  # espeak-ng is needed for phonemization
+    modal.Image.debian_slim(python_version="3.10")
     .pip_install(
-        "TTS",  # Coqui TTS
+        "kokoro-onnx",  # Kokoro TTS
         "numpy",
         "scipy",
-        "fastapi"
+        "fastapi",
+        "soundfile",
+        "requests"
     )
 )
 
-app = modal.App("audibound-coqui-tts", image=image)
+app = modal.App("audibound-kokoro-tts", image=image)
 
 # Use Modal's Volume for model caching
-model_volume = modal.Volume.from_name("coqui-models", create_if_missing=True)
+model_volume = modal.Volume.from_name("kokoro-models", create_if_missing=True)
 
 @app.function(
-    gpu="T4",
+    cpu=2.0,  # Kokoro runs well on CPU
     volumes={"/cache": model_volume},
     timeout=300
 )
-def generate_audio(text: str, voice: str = "female", speed: float = 1.0):
+def generate_audio(text: str, voice: str = "af", speed: float = 1.0):
     """
-    Generate audio using Coqui TTS.
+    Generate audio using Kokoro TTS.
     
     Args:
         text: Text to synthesize
-        voice: Voice type (not used in single-speaker model, kept for compatibility)
-        speed: Speech speed multiplier (not fully supported yet)
+        voice: Voice code (af=American Female, am=American Male, bf=British Female, bm=British Male)
+        speed: Speech speed multiplier
     
     Returns:
         bytes: WAV audio data
     """
-    print(f"[Coqui] === Starting generation ===")
-    print(f"[Coqui] Text: {text[:100]}...")
+    print(f"[Kokoro] === Starting generation ===")
+    print(f"[Kokoro] Text: {text[:100]}...")
+    print(f"[Kokoro] Voice: {voice}, Speed: {speed}")
     
     try:
-        from TTS.api import TTS
+        from kokoro_onnx import Kokoro
         import numpy as np
         import scipy.io.wavfile
-        import torch
+        import os
         
-        # Initialize TTS with a good English model
-        # Using tts_models/en/ljspeech/tacotron2-DDC - fast and good quality
-        print("[Coqui] Initializing TTS model...")
+        print("[Kokoro] Initializing TTS model...")
         
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        print(f"[Coqui] Using device: {device}")
+        # Model files should be in the cache volume
+        model_path = "/cache/kokoro-v1.0.onnx"
+        voices_path = "/cache/voices-v1.0.bin"
         
-        tts = TTS(
-            model_name="tts_models/en/ljspeech/tacotron2-DDC",
-            progress_bar=False,
-            gpu=(device == "cuda")
-        )
+        # Download model files if they don't exist
+        if not os.path.exists(model_path) or not os.path.exists(voices_path):
+            print("[Kokoro] Downloading model files...")
+            import requests
+            
+            model_url = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.onnx"
+            voices_url = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin"
+            
+            if not os.path.exists(model_path):
+                response = requests.get(model_url)
+                with open(model_path, 'wb') as f:
+                    f.write(response.content)
+                print(f"[Kokoro] Downloaded model to {model_path}")
+            
+            if not os.path.exists(voices_path):
+                response = requests.get(voices_url)
+                with open(voices_path, 'wb') as f:
+                    f.write(response.content)
+                print(f"[Kokoro] Downloaded voices to {voices_path}")
         
-        print("[Coqui] Model loaded successfully")
+        # Initialize Kokoro with model files
+        kokoro = Kokoro(model_path, voices_path)
+        
+        print(f"[Kokoro] Model loaded successfully")
         
         # Generate audio
-        print("[Coqui] Generating speech...")
+        print(f"[Kokoro] Generating speech with voice: {voice}...")
         
-        # TTS.tts() returns a numpy array
-        audio = tts.tts(text=text)
+        # Map simple voice codes to full Kokoro voice names
+        voice_map = {
+            "af": "af_sarah",  # American Female
+            "am": "am_adam",   # American Male
+            "bf": "bf_emma",   # British Female
+            "bm": "bm_george"  # British Male
+        }
+        kokoro_voice = voice_map.get(voice, "af_sarah")
         
-        # Convert to int16 for WAV
-        audio = np.array(audio)
-        audio = (audio * 32767).astype(np.int16)
+        # Kokoro.create() returns (samples, sample_rate)
+        samples, sample_rate = kokoro.create(
+            text, 
+            voice=kokoro_voice, 
+            speed=speed,
+            lang="en-us"
+        )
         
-        print(f"[Coqui] Audio generated, shape: {audio.shape}")
+        # Ensure it's in the right format  (int16 for WAV)
+        if samples.dtype != np.int16:
+            samples = (samples * 32767).astype(np.int16)
+        
+        print(f"[Kokoro] Audio generated, shape: {samples.shape}, rate: {sample_rate}Hz")
         
         # Convert to WAV bytes
-        print("[Coqui] Converting to WAV...")
+        print("[Kokoro] Converting to WAV...")
         buffer = io.BytesIO()
         
-        # Coqui TTS typically outputs at 22050 Hz
-        sample_rate = 22050
-        scipy.io.wavfile.write(buffer, sample_rate, audio)
+        scipy.io.wavfile.write(buffer, sample_rate, samples)
+
         
         audio_bytes = buffer.getvalue()
         
-        print(f"[Coqui] Generated {len(audio_bytes)} bytes")
-        print(f"[Coqui] === Success! ===")
+        print(f"[Kokoro] Generated {len(audio_bytes)} bytes")
+        print(f"[Kokoro] === Success! ===")
         
         return audio_bytes
         
     except Exception as e:
-        print(f"[Coqui] !!! ERROR: {type(e).__name__}: {str(e)}")
+        print(f"[Kokoro] !!! ERROR: {type(e).__name__}: {str(e)}")
         import traceback
         traceback.print_exc()
         raise
@@ -97,14 +128,14 @@ def generate_audio(text: str, voice: str = "female", speed: float = 1.0):
 def generate_speech(item: dict):
     """
     Web endpoint for TTS generation.
-    Expects JSON: {"text": "...", "voice": "female", "speed": 1.0}
+    Expects JSON: {"text": "...", "voice": "af", "speed": 1.0}
     """
     from fastapi.responses import Response
     
     print(f"[Endpoint] Received request")
     
     text = item.get("text")
-    voice = item.get("voice", "female")
+    voice = item.get("voice", "af")  # Default to American Female
     speed = item.get("speed", 1.0)
     
     if not text:
