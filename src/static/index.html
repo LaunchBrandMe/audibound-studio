@@ -5,91 +5,361 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Audibound Studio</title>
     <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f4f4f9; }
-        h1 { color: #333; }
-        .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        input, textarea, button { width: 100%; padding: 10px; margin-bottom: 10px; box-sizing: border-box; }
-        button { background: #007bff; color: white; border: none; cursor: pointer; }
-        button:hover { background: #0056b3; }
-        .status { font-weight: bold; color: #555; }
-        .actions { display: flex; gap: 10px; }
-        .actions button { width: auto; }
+        :root {
+            font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #111827;
+            background-color: #f3f4f6;
+        }
+        body {
+            margin: 0;
+            padding: 24px;
+            background: #f3f4f6;
+        }
+        h1 {
+            margin-top: 0;
+        }
+        .layout {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 18px;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+        }
+        input, textarea, select {
+            font: inherit;
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            margin-bottom: 12px;
+            box-sizing: border-box;
+        }
+        textarea {
+            resize: vertical;
+        }
+        button {
+            font: inherit;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            background: #2563eb;
+            color: #fff;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        button:hover {
+            background: #1e40af;
+        }
+        button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        .status {
+            font-weight: 600;
+            color: #0f172a;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            background: #eff6ff;
+            border-radius: 999px;
+            padding: 4px 10px;
+            color: #1d4ed8;
+            margin-right: 8px;
+        }
+        .event-log {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: 14px;
+            border: 1px solid #e2e8f0;
+        }
+        .event-log ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .event-log li {
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .event-log time {
+            color: #64748b;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+        .engine-select {
+            margin: 12px 0 6px;
+        }
+        .flash {
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin: 10px 0 20px;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1d4ed8;
+        }
+        .flash.error {
+            background: #fef2f2;
+            border-color: #fecaca;
+            color: #dc2626;
+        }
+        .flash.success {
+            background: #ecfdf5;
+            border-color: #bbf7d0;
+            color: #15803d;
+        }
+        .projects-empty {
+            text-align: center;
+            color: #6b7280;
+            padding: 40px 0;
+        }
+        .muted {
+            color: #6b7280;
+        }
+        .status-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        .project-meta {
+            font-size: 0.9rem;
+            color: #475569;
+            margin-top: 8px;
+        }
+        .status-updated {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
     </style>
 </head>
 <body>
-    <h1>Audibound Studio</h1>
-    
-    <div class="card">
-        <h2>New Project</h2>
-        <input type="text" id="title" placeholder="Project Title">
-        <textarea id="text" rows="5" placeholder="Paste story text here..."></textarea>
-        <button onclick="createProject()">Create Project</button>
-    </div>
+    <div class="layout">
+        <h1>Audibound Studio</h1>
+        <div id="flash" class="flash" style="display:none;"></div>
 
-    <div id="projects">
-        <!-- Project list will go here -->
+        <div class="card">
+            <h2>Create a project</h2>
+            <input type="text" id="title" placeholder="Project Title" />
+            <textarea id="text" rows="6" placeholder="Paste story text here..."></textarea>
+            <button onclick="createProject()">Create Project</button>
+        </div>
+
+        <div id="projects" class="projects-empty">No projects yet. Create one to get started.</div>
     </div>
 
     <script>
-        const API_URL = ""; // Relative path
+        const API_URL = "";
+        const ENGINE_OPTIONS = [
+            { value: "kokoro", label: "Kokoro (fast default)" },
+            { value: "styletts2", label: "StyleTTS2 (expressive beta)" }
+        ];
+
+        const projectStore = {};
+        const projectOrder = [];
+
+        function showFlash(message, type = "info") {
+            const el = document.getElementById('flash');
+            if (!message) {
+                el.style.display = 'none';
+                return;
+            }
+            el.textContent = message;
+            el.className = `flash ${type}`;
+            el.style.display = 'block';
+        }
+
+        function ensureProjectEntry(data) {
+            const id = data.project_id;
+            if (!id) return null;
+            if (!projectStore[id]) {
+                projectStore[id] = {
+                    project_id: id,
+                    title: data.title || 'Untitled project',
+                    status: data.status || 'created',
+                    selectedEngine: data.last_engine || 'kokoro',
+                    events: []
+                };
+                projectOrder.unshift(id);
+            }
+            const project = projectStore[id];
+            if (data.title) project.title = data.title;
+            if (data.status) project.status = data.status;
+            if (data.manifest !== undefined) project.manifest = data.manifest;
+            if (data.bible !== undefined) project.bible = data.bible;
+            if (data.output_path !== undefined) project.output_path = data.output_path;
+            if (data.last_engine) {
+                project.last_engine = data.last_engine;
+                project.selectedEngine = project.selectedEngine || data.last_engine;
+            }
+            project.updated_at = new Date().toLocaleTimeString();
+            return project;
+        }
+
+        function addProjectEvent(projectId, message) {
+            const project = ensureProjectEntry({ project_id: projectId });
+            if (!project) return;
+            project.events = project.events || [];
+            project.events.unshift({ message, timestamp: new Date().toLocaleTimeString() });
+            project.events = project.events.slice(0, 6);
+            renderProjects();
+        }
+
+        function renderProjects() {
+            const container = document.getElementById('projects');
+            if (!projectOrder.length) {
+                container.className = 'projects-empty';
+                container.innerHTML = 'No projects yet. Create one to get started.';
+                return;
+            }
+            container.className = '';
+            container.innerHTML = projectOrder.map(id => renderProjectCard(projectStore[id])).join('');
+        }
+
+        function renderProjectCard(project) {
+            if (!project) return '';
+            const events = (project.events && project.events.length)
+                ? `<ul>${project.events.map(evt => `<li><span>${evt.message}</span><time>${evt.timestamp}</time></li>`).join('')}</ul>`
+                : '<p class="muted">No activity yet.</p>';
+            const manifestInfo = project.manifest ? `<p class="project-meta">Scenes: ${project.manifest.scenes?.length || 0}</p>` : '<p class="project-meta muted">Manifest not ready yet.</p>';
+            const downloadInfo = project.output_path ? `<p class="project-meta">Last output: ${project.output_path}</p>` : '';
+            const engineOptions = ENGINE_OPTIONS.map(opt => {
+                const selected = (project.selectedEngine || 'kokoro') === opt.value ? 'selected' : '';
+                return `<option value="${opt.value}" ${selected}>${opt.label}</option>`;
+            }).join('');
+            const canProduce = Boolean(project.manifest);
+            const produceAttrs = canProduce ? '' : 'disabled title="Run Direct Script first"';
+            return `
+                <div class="card" data-project="${project.project_id}">
+                    <div class="status-row">
+                        <h3 style="margin:0;">${project.title || 'Untitled project'}</h3>
+                        <span class="badge">ID: ${project.project_id.slice(0,8)}…</span>
+                    </div>
+                    <p class="status">Status: ${project.status}</p>
+                    ${project.last_engine ? `<p class="status-updated">Last engine: ${project.last_engine}</p>` : ''}
+                    ${manifestInfo}
+                    ${downloadInfo}
+                    <div class="engine-select">
+                        <label for="engine-${project.project_id}">Voice engine</label>
+                        <select id="engine-${project.project_id}" onchange="updateEngine('${project.project_id}', this.value)">
+                            ${engineOptions}
+                        </select>
+                    </div>
+                    <div class="actions">
+                        <button onclick="triggerAction('${project.project_id}', 'direct')">Direct Script</button>
+                        <button ${produceAttrs} onclick="triggerAction('${project.project_id}', 'produce')">Produce Audio</button>
+                        <button onclick="checkStatus('${project.project_id}')">Refresh Status</button>
+                    </div>
+                    <div class="event-log">
+                        <strong>Recent activity</strong>
+                        ${events}
+                    </div>
+                </div>
+            `;
+        }
 
         async function createProject() {
-            const title = document.getElementById('title').value;
-            const text = document.getElementById('text').value;
-            
-            const res = await fetch(`${API_URL}/projects`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, text })
-            });
-            
-            if (res.ok) {
+            const titleEl = document.getElementById('title');
+            const textEl = document.getElementById('text');
+            const title = titleEl.value.trim();
+            const text = textEl.value.trim();
+            if (!title || !text) {
+                showFlash('Title and text are required.', 'error');
+                return;
+            }
+            showFlash('Creating project…');
+            try {
+                const res = await fetch(`${API_URL}/projects`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, text })
+                });
                 const data = await res.json();
-                alert(`Project Created: ${data.project_id}`);
-                loadProject(data.project_id);
-            } else {
-                alert("Error creating project");
+                if (!res.ok) {
+                    throw new Error(data.detail || 'Failed to create project');
+                }
+                const project = ensureProjectEntry(data);
+                project.title = title;
+                addProjectEvent(data.project_id, 'Project created');
+                renderProjects();
+                showFlash('Project created. Run Direction to get a manifest.', 'success');
+                titleEl.value = '';
+                textEl.value = '';
+                await loadProject(data.project_id, { silent: true });
+            } catch (err) {
+                showFlash(err.message, 'error');
             }
         }
 
-        async function loadProject(projectId) {
-            const res = await fetch(`${API_URL}/projects/${projectId}`);
-            const p = await res.json();
-            
-            const html = `
-                <div class="card">
-                    <h3>${projectId}</h3>
-                    <p>Status: <span class="status">${p.status}</span></p>
-                    <div class="actions">
-                        <button onclick="triggerAction('${projectId}', 'direct')">Direct Script (Gemini)</button>
-                        <button onclick="triggerAction('${projectId}', 'produce')">Produce Audio (Kokoro)</button>
-                        <button onclick="checkStatus('${projectId}')">Refresh Status</button>
-                    </div>
-                    ${p.manifest ? '<p>✅ Manifest Ready</p>' : ''}
-                    ${p.status === 'produced' ? '<p>🎉 <a href="#">Download M4B (Check Output Dir)</a></p>' : ''}
-                </div>
-            `;
-            document.getElementById('projects').innerHTML = html + document.getElementById('projects').innerHTML;
+        function updateEngine(projectId, value) {
+            const project = ensureProjectEntry({ project_id: projectId });
+            if (!project) return;
+            project.selectedEngine = value;
+            addProjectEvent(projectId, `Voice engine set to ${value}`);
         }
 
         async function triggerAction(projectId, action) {
-            const res = await fetch(`${API_URL}/projects/${projectId}/${action}`, { method: 'POST' });
-            if (res.ok) {
-                alert(`${action} started!`);
-                checkStatus(projectId);
-            } else {
-                alert(`Failed to start ${action}`);
+            const project = ensureProjectEntry({ project_id: projectId });
+            if (!project) return;
+            const humanAction = action === 'direct' ? 'Direction' : 'Production';
+            addProjectEvent(projectId, `${humanAction} requested…`);
+            const fetchOptions = { method: 'POST' };
+            if (action === 'produce') {
+                const engine = project.selectedEngine || 'kokoro';
+                fetchOptions.headers = { 'Content-Type': 'application/json' };
+                fetchOptions.body = JSON.stringify({ engine });
+            }
+            try {
+                const res = await fetch(`${API_URL}/projects/${projectId}/${action}`, fetchOptions);
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.detail || data.message || `Failed to start ${action}`);
+                }
+                if (data.engine) {
+                    project.last_engine = data.engine;
+                }
+                addProjectEvent(projectId, `${humanAction} queued${data.engine ? ' (' + data.engine + ')' : ''}`);
+                await loadProject(projectId, { silent: true });
+            } catch (err) {
+                addProjectEvent(projectId, `⚠️ ${humanAction} failed: ${err.message}`);
             }
         }
 
-        async function checkStatus(projectId) {
-            // Reload the specific project card (simplified: just reload page or re-fetch)
-            // For MVP, let's just re-render the whole list or just that item.
-            // We'll just re-call loadProject which prepends, so clear list first in real app.
-            // Here we just alert new status
-            const res = await fetch(`${API_URL}/projects/${projectId}`);
-            const p = await res.json();
-            alert(`Current Status: ${p.status}`);
+        async function loadProject(projectId, options = {}) {
+            try {
+                const res = await fetch(`${API_URL}/projects/${projectId}`);
+                if (!res.ok) {
+                    throw new Error('Unable to load project');
+                }
+                const data = await res.json();
+                ensureProjectEntry(data);
+                renderProjects();
+                if (!options.silent) {
+                    addProjectEvent(projectId, `Status updated to ${data.status}`);
+                }
+            } catch (err) {
+                addProjectEvent(projectId, `⚠️ Refresh failed: ${err.message}`);
+            }
+        }
+
+        function checkStatus(projectId) {
+            return loadProject(projectId);
         }
     </script>
 </body>

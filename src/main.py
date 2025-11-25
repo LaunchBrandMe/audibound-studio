@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 import os
@@ -34,9 +34,16 @@ class CreateProjectRequest(BaseModel):
 
 class ProjectResponse(BaseModel):
     project_id: str
+    title: str
     status: str
+    output_path: Optional[str] = None
+    last_engine: Optional[str] = None
     bible: Optional[SeriesBible] = None
     manifest: Optional[ScriptManifest] = None
+
+
+class ProduceAudioRequest(BaseModel):
+    engine: str = "kokoro"
 
 @app.post("/projects", response_model=ProjectResponse)
 async def create_project(request: CreateProjectRequest):
@@ -50,7 +57,13 @@ async def create_project(request: CreateProjectRequest):
         "manifest": None
     }
     update_project_in_db(project_id, new_project)
-    return ProjectResponse(project_id=project_id, status="created")
+    return ProjectResponse(
+        project_id=project_id,
+        title=new_project["title"],
+        status="created",
+        output_path=None,
+        last_engine=None
+    )
 
 @app.post("/projects/{project_id}/direct")
 async def direct_script(project_id: str):
@@ -73,13 +86,16 @@ async def get_project(project_id: str):
     
     return ProjectResponse(
         project_id=project["id"],
+        title=project.get("title", "Untitled"),
         status=project["status"],
+        output_path=project.get("output_path"),
+        last_engine=project.get("last_engine"),
         bible=project.get("bible"),
         manifest=project.get("manifest")
     )
 
 @app.post("/projects/{project_id}/produce")
-async def produce_audio(project_id: str):
+async def produce_audio(project_id: str, request: ProduceAudioRequest | None = None):
     project = get_project_from_db(project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -87,8 +103,13 @@ async def produce_audio(project_id: str):
     if not project.get("manifest"):
         raise HTTPException(status_code=400, detail="Project has not been directed yet")
 
+    engine = (request.engine if request else "kokoro").lower()
+    allowed_engines = {"kokoro", "styletts2", "indextts2", "mock"}
+    if engine not in allowed_engines:
+        raise HTTPException(status_code=400, detail=f"Unsupported engine '{engine}'")
+
     # Dispatch to Celery
-    task_produce_audio.delay(project_id)
-    return {"message": "Production queued", "project_id": project_id}
+    task_produce_audio.delay(project_id, engine)
+    return {"message": "Production queued", "project_id": project_id, "engine": engine}
 
 

@@ -18,6 +18,8 @@ load_dotenv()
 # In production, use env vars for broker URL
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 MODAL_URL = os.getenv("MODAL_URL")
+STYLETTS2_MODAL_URL = os.getenv("STYLETTS2_MODAL_URL")
+INDEXTTS2_MODAL_URL = os.getenv("INDEXTTS2_MODAL_URL")
 print(f"[Worker] Loaded configuration - REDIS_URL: {REDIS_URL}, MODAL_URL: {MODAL_URL}")
 celery_app = Celery("audibound_worker", broker=REDIS_URL, backend=REDIS_URL)
 
@@ -46,6 +48,14 @@ def update_project_in_db(project_id: str, update_data: dict):
         
     with open(DB_FILE, 'w') as f:
         json.dump(data, f, indent=2, default=str)
+
+def _resolve_modal_url(engine: str) -> str | None:
+    mapping = {
+        "kokoro": MODAL_URL,
+        "styletts2": STYLETTS2_MODAL_URL,
+        "indextts2": INDEXTTS2_MODAL_URL,
+    }
+    return mapping.get(engine, MODAL_URL)
 
 @celery_app.task(name="tasks.direct_script")
 def task_direct_script(project_id: str):
@@ -82,12 +92,12 @@ def task_direct_script(project_id: str):
     print(f"[Worker] Direction complete for {project_id}")
 
 @celery_app.task(name="tasks.produce_audio")
-def task_produce_audio(project_id: str):
+def task_produce_audio(project_id: str, voice_engine: str = "kokoro"):
     # Since Celery is synchronous by default, we run the async code via asyncio.run
-    asyncio.run(run_production_pipeline_async(project_id))
+    asyncio.run(run_production_pipeline_async(project_id, voice_engine))
 
-async def run_production_pipeline_async(project_id: str):
-    print(f"[Worker] Starting production for {project_id}...")
+async def run_production_pipeline_async(project_id: str, voice_engine: str = "kokoro"):
+    print(f"[Worker] Starting production for {project_id} using {voice_engine}...")
     project = get_project_from_db(project_id)
     if not project or not project.get("manifest"):
         print("Invalid project state")
@@ -105,7 +115,13 @@ async def run_production_pipeline_async(project_id: str):
     temp_dir = os.path.join(output_dir, "temp")
     os.makedirs(temp_dir, exist_ok=True)
     
-    voice_provider = get_voice_provider("kokoro", modal_url=os.getenv("MODAL_URL"))  # Switched back to Kokoro with simplified Modal app 
+    modal_url = _resolve_modal_url(voice_engine)
+    if voice_engine in {"kokoro", "styletts2", "indextts2"} and not modal_url:
+        raise RuntimeError(f"Missing Modal URL for engine '{voice_engine}'")
+    provider_kwargs = {}
+    if modal_url:
+        provider_kwargs['modal_url'] = modal_url
+    voice_provider = get_voice_provider(voice_engine, **provider_kwargs)  # Engine selected per request 
     assembler = AudioAssembler(output_dir)
     
     # 1. Generate Audio
@@ -171,6 +187,7 @@ async def run_production_pipeline_async(project_id: str):
     
     update_project_in_db(project_id, {
         "status": "produced",
-        "output_path": final_m4b
+        "output_path": final_m4b,
+        "last_engine": voice_engine
     })
     print(f"[Worker] Production complete: {final_m4b}")
