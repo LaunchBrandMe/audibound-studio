@@ -152,6 +152,12 @@ class MockProvider(VoiceProvider):
 def get_voice_provider(provider_type: str = "kokoro", **kwargs) -> VoiceProvider:
     if provider_type == "kokoro":
         return KokoroProvider(modal_url=kwargs.get("modal_url"))
+    elif provider_type == "styletts2":
+        from src.core.styletts2_provider import StyleTTS2Provider
+        return StyleTTS2Provider(modal_url=kwargs.get("modal_url"))
+    elif provider_type == "indextts2":
+        from src.core.indextts2_provider import IndexTTS2Provider
+        return IndexTTS2Provider(modal_url=kwargs.get("modal_url"))
     elif provider_type == "elevenlabs":
         return ElevenLabsProvider(api_key=kwargs.get("api_key"))
     elif provider_type == "mock":
