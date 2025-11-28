@@ -1,8 +1,20 @@
 import ffmpeg
 import os
 import json
+import re
 from typing import List, Optional
 from src.core.abml import ScriptManifest, Scene, AudioBlock
+
+
+def _next_render_suffix(output_dir: str, project_id: str) -> str:
+    """Return next sequential suffix like '__01' for project renders."""
+    pattern = re.compile(rf"^{re.escape(project_id)}__(\d+)\\.m4b$")
+    max_index = 0
+    for name in os.listdir(output_dir):
+        match = pattern.match(name)
+        if match:
+            max_index = max(max_index, int(match.group(1)))
+    return f"__{max_index + 1:02d}"
 
 class AudioAssembler:
     def __init__(self, output_dir: str):
@@ -78,11 +90,19 @@ class AudioAssembler:
         self.create_silence(total_duration_ms, output_path)
         return output_path
 
-    def mix_stems_to_m4b(self, narration_path: str, music_path: Optional[str], sfx_path: Optional[str], manifest: ScriptManifest) -> str:
+    def mix_stems_to_m4b(
+        self,
+        narration_path: str,
+        music_path: Optional[str],
+        sfx_path: Optional[str],
+        manifest: ScriptManifest,
+        engine_tag: Optional[str] = None,
+    ) -> str:
         """
         Mixes the 3 stems into a final M4B and embeds the ABML JSON.
         """
-        output_m4b = os.path.join(self.output_dir, f"{manifest.project_id}.m4b")
+        suffix = _next_render_suffix(self.output_dir, manifest.project_id)
+        output_m4b = os.path.join(self.output_dir, f"{manifest.project_id}{suffix}.m4b")
         metadata_file = os.path.join(self.output_dir, "metadata.txt")
 
         # 1. Create FFmetadata file (simplified)

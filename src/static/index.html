@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Audibound Studio</title>
     <style>
         :root {
@@ -10,18 +11,22 @@
             color: #111827;
             background-color: #f3f4f6;
         }
+
         body {
             margin: 0;
             padding: 24px;
             background: #f3f4f6;
         }
+
         h1 {
             margin-top: 0;
         }
+
         .layout {
-            max-width: 960px;
+            max-width: 1200px;
             margin: 0 auto;
         }
+
         .card {
             background: #fff;
             border-radius: 12px;
@@ -29,7 +34,10 @@
             margin-bottom: 18px;
             box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
         }
-        input, textarea, select {
+
+        input,
+        textarea,
+        select {
             font: inherit;
             width: 100%;
             padding: 10px 12px;
@@ -38,9 +46,11 @@
             margin-bottom: 12px;
             box-sizing: border-box;
         }
+
         textarea {
             resize: vertical;
         }
+
         button {
             font: inherit;
             border: none;
@@ -51,61 +61,90 @@
             cursor: pointer;
             transition: background 0.2s ease;
         }
+
         button:hover {
             background: #1e40af;
         }
+
         button:disabled {
             background: #94a3b8;
             cursor: not-allowed;
         }
-        .actions {
+
+        .tabs {
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 8px;
+            gap: 12px;
+            margin: 14px 0;
         }
-        .status {
-            font-weight: 600;
-            color: #0f172a;
-        }
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.85rem;
-            background: #eff6ff;
+
+        .tab {
+            padding: 10px 20px;
             border-radius: 999px;
-            padding: 4px 10px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            background: #e0e7ff;
             color: #1d4ed8;
-            margin-right: 8px;
         }
-        .event-log {
-            background: #f8fafc;
-            border-radius: 10px;
-            padding: 12px;
-            margin-top: 14px;
+
+        .tab.active {
+            background: #1d4ed8;
+            color: #fff;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+        }
+
+        .list {
             border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px;
+            background: #f8fafc;
         }
-        .event-log ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
+
+        .list-item {
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 10px;
+            background: #fff;
         }
-        .event-log li {
+
+        .list-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .small {
             font-size: 0.9rem;
-            margin-bottom: 6px;
+            color: #475569;
+        }
+
+        .muted {
+            color: #6b7280;
+        }
+
+        .history-entry {
             display: flex;
             justify-content: space-between;
-            gap: 12px;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 8px 0;
         }
-        .event-log time {
-            color: #64748b;
-            font-size: 0.8rem;
-            white-space: nowrap;
+
+        .history-entry:last-child {
+            border-bottom: none;
         }
-        .engine-select {
-            margin: 12px 0 6px;
+
+        .pill {
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            background: #e0f2fe;
+            color: #0369a1;
         }
+
         .flash {
             border-radius: 10px;
             padding: 12px 16px;
@@ -113,46 +152,72 @@
             background: #eff6ff;
             border: 1px solid #bfdbfe;
             color: #1d4ed8;
+            display: none;
         }
+
         .flash.error {
             background: #fef2f2;
             border-color: #fecaca;
             color: #dc2626;
         }
+
         .flash.success {
             background: #ecfdf5;
             border-color: #bbf7d0;
             color: #15803d;
         }
-        .projects-empty {
-            text-align: center;
-            color: #6b7280;
-            padding: 40px 0;
+
+        .custom-style {
+            display: none;
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
         }
-        .muted {
-            color: #6b7280;
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #bfdbfe;
+            border-top-color: #2563eb;
+            border-radius: 50%;
+            display: inline-block;
+            animation: spin 0.8s linear infinite;
+            margin-right: 6px;
         }
-        .status-row {
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .panel-header {
             display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
+            justify-content: space-between;
             align-items: center;
+            gap: 12px;
         }
-        .project-meta {
-            font-size: 0.9rem;
-            color: #475569;
+
+        .score-card {
+            border: 1px solid #dbeafe;
+            background: #eff6ff;
+            border-radius: 12px;
+            padding: 12px;
+            margin-top: 12px;
+        }
+
+        .issues {
             margin-top: 8px;
-        }
-        .status-updated {
-            font-size: 0.85rem;
-            color: #64748b;
+            padding-left: 18px;
         }
     </style>
 </head>
+
 <body>
     <div class="layout">
         <h1>Audibound Studio</h1>
-        <div id="flash" class="flash" style="display:none;"></div>
+        <div id="flash" class="flash"></div>
 
         <div class="card">
             <h2>Create a project</h2>
@@ -167,19 +232,22 @@
     <script>
         const API_URL = "";
         const ENGINE_OPTIONS = [
-            { value: "kokoro", label: "Kokoro (fast default)" },
-            { value: "styletts2", label: "StyleTTS2 (expressive beta)" }
+            { value: "kokoro_multi", label: "Kokoro (multi-voice)" },
+            { value: "kokoro_single", label: "Kokoro (single voice preview)" },
+            { value: "styletts2", label: "StyleTTS2 (expressive multi-voice)" },
+            { value: "sesame", label: "Sesame CSM (expressive)" }
         ];
 
         const projectStore = {};
         const projectOrder = [];
+        const projectPollers = {};
+        const STYLE_OPTIONS = [
+            'neutral', 'calm', 'joyful', 'excited', 'angry', 'furious', 'sad', 'melancholy', 'tired', 'somber', 'whispering', 'soft', 'urgent', 'surprised'
+        ];
 
         function showFlash(message, type = "info") {
             const el = document.getElementById('flash');
-            if (!message) {
-                el.style.display = 'none';
-                return;
-            }
+            if (!message) { el.style.display = 'none'; return; }
             el.textContent = message;
             el.className = `flash ${type}`;
             el.style.display = 'block';
@@ -193,27 +261,36 @@
                     project_id: id,
                     title: data.title || 'Untitled project',
                     status: data.status || 'created',
-                    selectedEngine: data.last_engine || 'kokoro',
-                    events: []
+                    selectedEngine: data.last_engine || 'kokoro_multi',
+                    events: [],
+                    tab: 'direction',
+                    voice_overrides: data.voice_overrides || {},
+                    render_history: data.render_history || [],
+                    characters: data.characters || [],
+                    availableVoices: data.available_voices || {},
+                    validation_summary: data.validation_summary || null,
+                    loadingAction: null,
                 };
                 projectOrder.unshift(id);
             }
             const project = projectStore[id];
-            if (data.title) project.title = data.title;
-            if (data.status) project.status = data.status;
+            if (data.title !== undefined) project.title = data.title || project.title;
+            if (data.status !== undefined) project.status = data.status;
             if (data.manifest !== undefined) project.manifest = data.manifest;
             if (data.bible !== undefined) project.bible = data.bible;
             if (data.output_path !== undefined) project.output_path = data.output_path;
-            if (data.last_engine) {
-                project.last_engine = data.last_engine;
-                project.selectedEngine = project.selectedEngine || data.last_engine;
-            }
+            if (data.last_engine && !project.loadingAction) project.last_engine = data.last_engine;
+            if (data.characters !== undefined) project.characters = data.characters || [];
+            if (data.available_voices !== undefined) project.availableVoices = data.available_voices || {};
+            if (data.render_history !== undefined) project.render_history = data.render_history || [];
+            if (data.voice_overrides !== undefined) project.voice_overrides = data.voice_overrides || {};
+            if (data.validation_summary !== undefined) project.validation_summary = data.validation_summary || null;
             project.updated_at = new Date().toLocaleTimeString();
             return project;
         }
 
         function addProjectEvent(projectId, message) {
-            const project = ensureProjectEntry({ project_id: projectId });
+            const project = projectStore[projectId];
             if (!project) return;
             project.events = project.events || [];
             project.events.unshift({ message, timestamp: new Date().toLocaleTimeString() });
@@ -234,55 +311,166 @@
 
         function renderProjectCard(project) {
             if (!project) return '';
-            const events = (project.events && project.events.length)
-                ? `<ul>${project.events.map(evt => `<li><span>${evt.message}</span><time>${evt.timestamp}</time></li>`).join('')}</ul>`
-                : '<p class="muted">No activity yet.</p>';
-            const manifestInfo = project.manifest ? `<p class="project-meta">Scenes: ${project.manifest.scenes?.length || 0}</p>` : '<p class="project-meta muted">Manifest not ready yet.</p>';
-            const downloadInfo = project.output_path ? `<p class="project-meta">Last output: ${project.output_path}</p>` : '';
-            const engineOptions = ENGINE_OPTIONS.map(opt => {
-                const selected = (project.selectedEngine || 'kokoro') === opt.value ? 'selected' : '';
-                return `<option value="${opt.value}" ${selected}>${opt.label}</option>`;
-            }).join('');
-            const canProduce = Boolean(project.manifest);
-            const produceAttrs = canProduce ? '' : 'disabled title="Run Direct Script first"';
+            const tabs = `
+                <div class="tabs">
+                    <div class="tab ${project.tab === 'direction' ? 'active' : ''}" onclick="switchTab('${project.project_id}','direction')">Direction</div>
+                    <div class="tab ${project.tab === 'production' ? 'active' : ''}" onclick="switchTab('${project.project_id}','production')">Production</div>
+                </div>
+            `;
+            const directionView = renderDirectionView(project);
+            const productionView = renderProductionView(project);
             return `
                 <div class="card" data-project="${project.project_id}">
-                    <div class="status-row">
-                        <h3 style="margin:0;">${project.title || 'Untitled project'}</h3>
-                        <span class="badge">ID: ${project.project_id.slice(0,8)}…</span>
+                    <div class="panel-header">
+                        <div>
+                            <h3 style="margin:0;">${project.title}</h3>
+                            <p class="small">Status: <strong>${project.status}</strong></p>
+                        </div>
+                        <div>
+                            <span class="pill">ID: ${project.project_id.slice(0, 8)}…</span>
+                        </div>
                     </div>
-                    <p class="status">Status: ${project.status}</p>
-                    ${project.last_engine ? `<p class="status-updated">Last engine: ${project.last_engine}</p>` : ''}
-                    ${manifestInfo}
-                    ${downloadInfo}
-                    <div class="engine-select">
-                        <label for="engine-${project.project_id}">Voice engine</label>
-                        <select id="engine-${project.project_id}" onchange="updateEngine('${project.project_id}', this.value)">
-                            ${engineOptions}
-                        </select>
+                    ${tabs}
+                    ${project.tab === 'direction' ? directionView : productionView}
+                </div>
+            `;
+        }
+
+        function renderDirectionView(project) {
+            const validation = project.validation_summary;
+            const validationCard = validation ? `
+                <div class="score-card">
+                    <strong>Quality Score: ${validation.score}/100</strong>
+                    ${validation.issues && validation.issues.length ? `<div class="issues"><strong>Issues:</strong><ul>${validation.issues.map(i => `<li>${i}</li>`).join('')}</ul></div>` : ''}
+                    ${validation.warnings && validation.warnings.length ? `<div class="issues"><strong>Warnings:</strong><ul>${validation.warnings.map(i => `<li>${i}</li>`).join('')}</ul></div>` : ''}
+                </div>`
+                : '<p class="muted">Run Direct Script to generate the character breakdown and quality score.</p>';
+
+            const characters = (project.characters && project.characters.length)
+                ? renderCharacterList(project)
+                : '<p class="muted">Characters will appear after directing this script.</p>';
+
+            const directing = project.loadingAction === 'direct';
+            return `
+                <div>
+                    <div class="panel-header" style="margin-bottom:12px;">
+                        <div>
+                            <p class="small">Current status: ${project.status}</p>
+                        </div>
+                        <div>
+                            <button onclick="triggerAction('${project.project_id}', 'direct')" ${directing ? 'disabled' : ''}>
+                                ${directing ? '<span class="spinner"></span>Directing…' : 'Direct Script'}
+                            </button>
+                        </div>
                     </div>
-                    <div class="actions">
-                        <button onclick="triggerAction('${project.project_id}', 'direct')">Direct Script</button>
-                        <button ${produceAttrs} onclick="triggerAction('${project.project_id}', 'produce')">Produce Audio</button>
-                        <button onclick="checkStatus('${project.project_id}')">Refresh Status</button>
-                    </div>
-                    <div class="event-log">
-                        <strong>Recent activity</strong>
-                        ${events}
+                    ${validationCard}
+                    <div class="two-column" style="margin-top:16px;">
+                        <div>
+                            <h4>Characters</h4>
+                            ${characters}
+                            ${project.characters && project.characters.length ? '<button onclick="saveOverrides(\'' + project.project_id + '\')">Save Direction Changes</button>' : ''}
+                        </div>
+                        <div>
+                            <h4>Recent activity</h4>
+                            ${renderEvents(project)}
+                        </div>
                     </div>
                 </div>
             `;
         }
 
-        async function createProject() {
-            const titleEl = document.getElementById('title');
-            const textEl = document.getElementById('text');
-            const title = titleEl.value.trim();
-            const text = textEl.value.trim();
-            if (!title || !text) {
-                showFlash('Title and text are required.', 'error');
-                return;
+        function renderCharacterList(project) {
+            const voices = project.availableVoices || {};
+            return `<div class="list">${project.characters.map(char => {
+                const overrides = project.voice_overrides || {};
+                const hasOverride = overrides[char.name] && overrides[char.name].voice;
+                const currentVoice = hasOverride ? overrides[char.name].voice : char.default_voice;
+                const currentStyle = overrides[char.name]?.style || '';
+                const defaultSelected = hasOverride ? '' : 'selected';
+
+                // Parse default voice to display engine name
+                let defaultVoiceDisplay = char.default_voice;
+                if (char.default_voice && char.default_voice.includes(':')) {
+                    const [engine, voiceId] = char.default_voice.split(':', 2);
+                    const engineName = engine.charAt(0).toUpperCase() + engine.slice(1);
+                    defaultVoiceDisplay = `${voiceId} (${engineName})`;
+                }
+
+                const optionItems = [`<option value="" ${defaultSelected}>Use ${defaultVoiceDisplay}</option>`]
+                    .concat(Object.entries(voices).map(([id, label]) => {
+                        // Parse voice ID to display friendly format
+                        let displayText = id;
+                        if (id.includes(':')) {
+                            const [engine, voiceId] = id.split(':', 2);
+                            const engineName = engine.charAt(0).toUpperCase() + engine.slice(1);
+                            displayText = `${voiceId} (${engineName})`;
+                        }
+                        displayText += ` — ${label}`;
+                        return `<option value="${id}" ${hasOverride && currentVoice === id ? 'selected' : ''}>${displayText}</option>`;
+                    }))
+                    .join('');
+                return `
+                    <div class="list-item">
+                        <h4 style="margin:0 0 4px 0;">${char.name}</h4>
+                        <p class="small">${char.description || 'No description'}</p>
+                        <label class="small">Voice</label>
+                        <select onchange="updateOverride('${project.project_id}','${char.name}','voice', this.value)">${optionItems}</select>
+                        <label class="small">Style override</label>
+                        <select data-custom-style-select="${project.project_id}-${char.name}" onchange="handleStyleSelect('${project.project_id}','${char.name}', this.value)">
+                            <option value="" ${currentStyle ? '' : 'selected'}>Use base emotion</option>
+                            ${STYLE_OPTIONS.map(opt => `<option value="${opt}" ${currentStyle === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+                            <option value="custom-${char.name}" ${currentStyle && !STYLE_OPTIONS.includes(currentStyle) ? 'selected' : ''}>Custom…</option>
+                        </select>
+                        <input type="text" class="custom-style" placeholder="Custom style" value="${currentStyle && !STYLE_OPTIONS.includes(currentStyle) ? currentStyle : ''}" data-custom-style-input="${project.project_id}-${char.name}" style="display:${currentStyle && !STYLE_OPTIONS.includes(currentStyle) ? 'block' : 'none'}; margin-top:6px;" onblur="handleCustomStyleBlur('${project.project_id}','${char.name}', this.value)" />
+                    </div>`;
+            }).join('')}</div>`;
+        }
+
+        function renderProductionView(project) {
+            const history = (project.render_history && project.render_history.length)
+                ? project.render_history.map(entry => `
+                    <div class="history-entry">
+                        <span>${entry.timestamp} — ${entry.engine}</span>
+                        <div style="display:flex; gap:8px;">
+                            ${entry.output_path ? `
+                                <button onclick="playAudio('${entry.output_path}')" style="padding:4px 10px; font-size:0.85rem;">▶ Play</button>
+                                <a href="${entry.output_path}" download style="padding:4px 10px; background:#10b981; color:#fff; border-radius:6px; text-decoration:none; font-size:0.85rem;">⬇ Download</a>
+                            ` : '<span class="muted">Pending</span>'}
+                        </div>
+                    </div>`).join('')
+                : '<p class="muted">No productions yet.</p>';
+            return `
+                <div class="two-column">
+                    <div>
+                        <h4>Produce Audio</h4>
+                        <p class="small muted">Engine is automatically detected from character voice assignments</p>
+                        <div class="flex" style="gap:12px; margin-top:14px; flex-wrap:wrap;">
+                            <button onclick="triggerAction('${project.project_id}', 'produce')" ${project.manifest ? '' : 'disabled title="Run Direct Script first"'} ${project.loadingAction === 'produce' ? 'disabled' : ''}>
+                                ${project.loadingAction === 'produce' ? '<span class="spinner"></span>Producing…' : 'Produce Audio'}
+                            </button>
+                        </div>
+                        <h4 style="margin-top:20px;">Render History</h4>
+                        <div class="list">${history}</div>
+                    </div>
+                    <div>
+                        <h4>Recent activity</h4>
+                        ${renderEvents(project)}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderEvents(project) {
+            if (!project.events || !project.events.length) {
+                return '<p class="muted">No activity yet.</p>';
             }
+            return `<ul>${project.events.map(evt => `<li class="history-entry"><span>${evt.message}</span><span>${evt.timestamp}</span></li>`).join('')}</ul>`;
+        }
+
+        async function createProject() {
+            const title = document.getElementById('title').value.trim();
+            const text = document.getElementById('text').value.trim();
+            if (!title || !text) { showFlash('Title and text are required.', 'error'); return; }
             showFlash('Creating project…');
             try {
                 const res = await fetch(`${API_URL}/projects`, {
@@ -291,76 +479,162 @@
                     body: JSON.stringify({ title, text })
                 });
                 const data = await res.json();
-                if (!res.ok) {
-                    throw new Error(data.detail || 'Failed to create project');
-                }
-                const project = ensureProjectEntry(data);
-                project.title = title;
-                addProjectEvent(data.project_id, 'Project created');
+                if (!res.ok) throw new Error(data.detail || 'Failed to create project');
+                ensureProjectEntry(data);
                 renderProjects();
-                showFlash('Project created. Run Direction to get a manifest.', 'success');
-                titleEl.value = '';
-                textEl.value = '';
-                await loadProject(data.project_id, { silent: true });
+                showFlash('Project created. Run Direct Script to generate direction data.', 'success');
             } catch (err) {
                 showFlash(err.message, 'error');
             }
         }
 
+        function switchTab(projectId, tab) {
+            const project = projectStore[projectId];
+            if (!project) return;
+            project.tab = tab;
+            renderProjects();
+        }
+
         function updateEngine(projectId, value) {
-            const project = ensureProjectEntry({ project_id: projectId });
+            const project = projectStore[projectId];
             if (!project) return;
             project.selectedEngine = value;
             addProjectEvent(projectId, `Voice engine set to ${value}`);
         }
 
-        async function triggerAction(projectId, action) {
-            const project = ensureProjectEntry({ project_id: projectId });
+        function handleStyleSelect(projectId, characterName, value) {
+            const input = document.querySelector(`[data-custom-style-input=\"${projectId}-${characterName}\"]`);
+            if (value.startsWith('custom-')) {
+                if (input) { input.style.display = 'block'; input.focus(); }
+            } else {
+                if (input) input.style.display = 'none';
+                updateOverride(projectId, characterName, 'style', value);
+            }
+        }
+
+        function handleCustomStyleBlur(projectId, characterName, value) {
+            updateOverride(projectId, characterName, 'style', value);
+            const selectEl = document.querySelector(`[data-custom-style-select=\"${projectId}-${characterName}\"]`);
+            const input = document.querySelector(`[data-custom-style-input=\"${projectId}-${characterName}\"]`);
+            if (value) {
+                if (selectEl) selectEl.value = `custom-${characterName}`;
+                if (input) input.style.display = 'block';
+            } else {
+                if (selectEl) selectEl.value = '';
+                if (input) input.style.display = 'none';
+            }
+        }
+
+        function updateOverride(projectId, characterName, field, value) {
+            const project = projectStore[projectId];
             if (!project) return;
+            project.voice_overrides = project.voice_overrides || {};
+            project.voice_overrides[characterName] = project.voice_overrides[characterName] || {};
+            project.voice_overrides[characterName][field] = value || undefined;
+        }
+
+        async function saveOverrides(projectId) {
+            const project = projectStore[projectId];
+            if (!project) return;
+            try {
+                const res = await fetch(`${API_URL}/projects/${projectId}/overrides`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ overrides: project.voice_overrides || {} })
+                });
+                if (!res.ok) throw new Error('Failed to save overrides');
+                addProjectEvent(projectId, 'Overrides saved');
+                showFlash('Direction overrides saved.', 'success');
+                await loadProject(projectId, { silent: true });
+            } catch (err) {
+                showFlash(err.message, 'error');
+            }
+        }
+
+        async function triggerAction(projectId, action) {
+            const project = projectStore[projectId];
+            if (!project || project.loadingAction) return;
+            project.loadingAction = action;
+            renderProjects();
             const humanAction = action === 'direct' ? 'Direction' : 'Production';
             addProjectEvent(projectId, `${humanAction} requested…`);
             const fetchOptions = { method: 'POST' };
             if (action === 'produce') {
-                const engine = project.selectedEngine || 'kokoro';
+                // Auto-detect engine from character voice assignments
+                // Default to kokoro_multi, but this will be overridden by per-character engines
+                const engine = 'kokoro_multi';
                 fetchOptions.headers = { 'Content-Type': 'application/json' };
                 fetchOptions.body = JSON.stringify({ engine });
             }
             try {
                 const res = await fetch(`${API_URL}/projects/${projectId}/${action}`, fetchOptions);
                 const data = await res.json();
-                if (!res.ok) {
-                    throw new Error(data.detail || data.message || `Failed to start ${action}`);
-                }
-                if (data.engine) {
-                    project.last_engine = data.engine;
-                }
-                addProjectEvent(projectId, `${humanAction} queued${data.engine ? ' (' + data.engine + ')' : ''}`);
-                await loadProject(projectId, { silent: true });
+                if (!res.ok) throw new Error(data.detail || data.message || `Failed to start ${action}`);
+                if (data.engine) project.last_engine = data.engine;
+                addProjectEvent(projectId, `${humanAction} queued${data.engine ? ` (${data.engine})` : ''}`);
+                const targetStatus = action === 'direct' ? 'directed' : 'produced';
+                startPolling(projectId, targetStatus);
             } catch (err) {
+                project.loadingAction = null;
+                renderProjects();
                 addProjectEvent(projectId, `⚠️ ${humanAction} failed: ${err.message}`);
             }
+        }
+
+        function startPolling(projectId, stopStatus) {
+            if (projectPollers[projectId]) clearInterval(projectPollers[projectId]);
+            projectPollers[projectId] = setInterval(async () => {
+                const data = await loadProject(projectId, { silent: true });
+                const currentStatus = data?.status || projectStore[projectId]?.status;
+                if (!stopStatus || currentStatus === stopStatus) {
+                    clearInterval(projectPollers[projectId]);
+                    delete projectPollers[projectId];
+                    const project = projectStore[projectId];
+                    if (project) {
+                        project.loadingAction = null;
+                        renderProjects();
+                    }
+                }
+            }, 4000);
         }
 
         async function loadProject(projectId, options = {}) {
             try {
                 const res = await fetch(`${API_URL}/projects/${projectId}`);
-                if (!res.ok) {
-                    throw new Error('Unable to load project');
-                }
+                if (!res.ok) throw new Error('Unable to load project');
                 const data = await res.json();
-                ensureProjectEntry(data);
-                renderProjects();
-                if (!options.silent) {
-                    addProjectEvent(projectId, `Status updated to ${data.status}`);
+                const project = ensureProjectEntry(data);
+                if (project && project.loadingAction) {
+                    if (project.loadingAction === 'direct' && data.status === 'directed') {
+                        project.loadingAction = null;
+                    } else if (project.loadingAction === 'produce' && data.status === 'produced') {
+                        project.loadingAction = null;
+                    }
                 }
+                renderProjects();
+                if (!options.silent) addProjectEvent(projectId, `Status updated to ${data.status}`);
+                return data;
             } catch (err) {
-                addProjectEvent(projectId, `⚠️ Refresh failed: ${err.message}`);
+                if (!options.silent) addProjectEvent(projectId, `⚠️ Refresh failed: ${err.message}`);
+                return null;
             }
         }
 
-        function checkStatus(projectId) {
-            return loadProject(projectId);
+        function playAudio(audioPath) {
+            // Create or reuse audio player
+            let player = document.getElementById('global-audio-player');
+            if (!player) {
+                player = document.createElement('audio');
+                player.id = 'global-audio-player';
+                player.controls = true;
+                player.style.cssText = 'position:fixed; bottom:20px; right:20px; z-index:1000; border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,0.3);';
+                document.body.appendChild(player);
+            }
+            player.src = audioPath;
+            player.play();
         }
+
     </script>
 </body>
+
 </html>

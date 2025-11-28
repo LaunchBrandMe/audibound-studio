@@ -1,0 +1,49 @@
+{
+  "voices": [
+    {
+      "id": "a77dae99-9919-4cc5-9546-b321c2ec02be",
+      "name": "2514-149482-0089",
+      "engine": "styletts2",
+      "reference_file": "references/custom_uploads/a77dae99-9919-4cc5-9546-b321c2ec02be.wav",
+      "tags": [
+        "Male",
+        "American",
+        "Conversational"
+      ],
+      "created_at": "2025-11-28T00:14:50.706250Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "73a157a2-177c-4986-ab62-909c088cfa45",
+      "name": "Annie",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/73a157a2-177c-4986-ab62-909c088cfa45.wav",
+      "tags": [
+        "Female",
+        "American",
+        "Conversational"
+      ],
+      "created_at": "2025-11-28T00:24:12.468892Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "197f76e8-b823-497e-9ddd-f17f563a1dd8",
+      "name": "Tommy",
+      "engine": "sesame",
+      "reference_file": "references/custom_uploads/197f76e8-b823-497e-9ddd-f17f563a1dd8.wav",
+      "tags": [
+        "Male",
+        "New Yorker",
+        "Narrator"
+      ],
+      "created_at": "2025-11-28T00:56:33.567999Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    }
+  ]
+}

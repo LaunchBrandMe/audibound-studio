@@ -1,9 +1,9 @@
 import os
 import json
 import google.generativeai as genai
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from src.core.abml import SeriesBible, Scene, ScriptManifest, CharacterProfile
-from src.core.validator import validate_and_log
+from src.core.validator import validate_and_log, ValidationResult
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -77,6 +77,10 @@ class ScriptDirector:
                     char['voice_ref'] = char.pop('VoiceReference')
                 
                 # Normalize description
+                if 'voice_ref' not in char or not char.get('voice_ref'):
+                    char['voice_ref'] = char.get('name', 'Unknown character')
+                
+                # Normalize description
                 if 'physical_personality_description' in char:
                     char['description'] = char.pop('physical_personality_description')
                 elif 'physicalDescription' in char:
@@ -85,6 +89,9 @@ class ScriptDirector:
                     char['description'] = char.pop('PhysicalDescription')
                 elif 'Description' in char:
                     char['description'] = char.pop('Description')
+                
+                if not char.get('description'):
+                    char['description'] = char.get('voice_ref') or char.get('name', 'Character description unavailable')
                 
                 # Normalize gender
                 if 'Gender' in char:
@@ -114,7 +121,7 @@ class ScriptDirector:
             print(f"Raw response: {response.text}")
             raise
 
-    def direct_scene(self, scene_text: str, bible: SeriesBible, scene_id: str = "1") -> Scene:
+    def direct_scene(self, scene_text: str, bible: SeriesBible, scene_id: str = "1") -> Tuple[Scene, "ValidationResult"]:
         """
         Directs a single scene: segments text into blocks, assigns voices, and adds SFX/Music.
         """
@@ -296,7 +303,7 @@ class ScriptDirector:
             if not validation_result.is_passing():
                 print(f"[Director] ⚠️  Scene quality below threshold but proceeding anyway")
             
-            return scene
+            return scene, validation_result
         except Exception as e:
             print(f"Error parsing Scene: {e}")
             print(f"Raw response: {response.text}")

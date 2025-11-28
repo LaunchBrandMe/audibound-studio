@@ -6,7 +6,14 @@ from typing import Optional
 
 class VoiceProvider(ABC):
     @abstractmethod
-    async def generate_audio(self, text: str, voice_id: str, speed: float = 1.0, style: Optional[str] = None) -> bytes:
+    async def generate_audio(
+        self,
+        text: str,
+        voice_id: str,
+        speed: float = 1.0,
+        style: Optional[str] = None,
+        reference_audio_path: Optional[str] = None,
+    ) -> bytes:
         pass
 
 
@@ -19,8 +26,18 @@ class StyleTTS2Provider(VoiceProvider):
     - beta: How much to use diffusion (0.0-1.0)
     """
     
+    # Available StyleTTS2 voices (single model with style control)
+    AVAILABLE_VOICES = {
+        "styletts2:default": "StyleTTS2 - Highly expressive with style control"
+    }
+    
     def __init__(self, modal_url: str):
         self.modal_url = modal_url
+    
+    @classmethod
+    def get_available_voices(cls):
+        """Return dictionary of available StyleTTS2 voices."""
+        return cls.AVAILABLE_VOICES.copy()
     
     def _style_to_params(self, style: Optional[str]) -> dict:
         """
@@ -60,7 +77,14 @@ class StyleTTS2Provider(VoiceProvider):
         # Default: moderate
         return {'alpha': 0.3, 'beta': 0.5}
     
-    async def generate_audio(self, text: str, voice_id: str, speed: float = 1.0, style: Optional[str] = None) -> bytes:
+    async def generate_audio(
+        self,
+        text: str,
+        voice_id: str,
+        speed: float = 1.0,
+        style: Optional[str] = None,
+        reference_audio_path: Optional[str] = None,
+    ) -> bytes:
         """
         Generate audio using StyleTTS2 via Modal endpoint.
         
@@ -69,20 +93,32 @@ class StyleTTS2Provider(VoiceProvider):
             voice_id: Voice identifier (not used for StyleTTS2 single-speaker model)
             speed: Speech speed multiplier (StyleTTS2 doesn't directly support this)
             style: ABML style (converted to alpha/beta)
+            reference_audio_path: Path to reference audio for voice cloning
         
         Returns:
             WAV audio bytes
         """
+        import base64
+        
         # Convert style to alpha/beta
         params = self._style_to_params(style)
         
+        payload = {
+            "text": text,
+            "alpha": params['alpha'],
+            "beta": params['beta']
+        }
+        
+        # Add reference audio for voice cloning
+        if reference_audio_path and os.path.exists(reference_audio_path):
+            print(f"[StyleTTS2] Loading reference audio: {reference_audio_path}")
+            with open(reference_audio_path, 'rb') as f:
+                audio_bytes = f.read()
+            # Encode as base64 for JSON payload
+            payload["voice_sample_bytes"] = base64.b64encode(audio_bytes).decode()
+            print(f"[StyleTTS2] Voice cloning enabled ({len(audio_bytes)} bytes)")
+        
         async with httpx.AsyncClient(follow_redirects=True) as client:
-            payload = {
-                "text": text,
-                "alpha": params['alpha'],
-                "beta": params['beta']
-            }
-            
             if style:
                 print(f"[StyleTTS2] Generating with style '{style}': alpha={params['alpha']}, beta={params['beta']}")
             else:

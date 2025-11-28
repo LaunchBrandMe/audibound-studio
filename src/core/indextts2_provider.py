@@ -1,12 +1,22 @@
 from abc import ABC, abstractmethod
+import base64
 import httpx
 import os
 from typing import Optional
 
+from src.core.voice_library import get_voice_library
+
 
 class VoiceProvider(ABC):
     @abstractmethod
-    async def generate_audio(self, text: str, voice_id: str, speed: float = 1.0, style: Optional[str] = None) -> bytes:
+    async def generate_audio(
+        self,
+        text: str,
+        voice_id: str,
+        speed: float = 1.0,
+        style: Optional[str] = None,
+        reference_audio_path: Optional[str] = None,
+    ) -> bytes:
         pass
 
 
@@ -17,8 +27,18 @@ class IndexTTS2Provider(VoiceProvider):
     IndexTTS-2 supports 8 emotions: [happy, angry, sad, afraid, disgusted, melancholic, surprised, calm]
     """
     
+    # Available IndexTTS2 voices (single model with emotion vectors)
+    AVAILABLE_VOICES = {
+        "indextts2:default": "IndexTTS-2 - Emotion vector control (8 emotions)"
+    }
+    
     def __init__(self, modal_url: str):
         self.modal_url = modal_url
+    
+    @classmethod
+    def get_available_voices(cls):
+        """Return dictionary of available IndexTTS2 voices."""
+        return cls.AVAILABLE_VOICES.copy()
     
     def _style_to_emotion_vector(self, style: Optional[str]) -> list:
         """
@@ -82,11 +102,25 @@ class IndexTTS2Provider(VoiceProvider):
         
         Returns: Path to reference audio file (or None to use default)
         """
-        # TODO: Create reference audio library
-        # For MVP, IndexTTS-2 will use its default voice
+        if not voice_id:
+            return None
+        if voice_id.startswith("custom_"):
+            library_id = voice_id.split("custom_", 1)[1]
+            voice = get_voice_library().get_voice(library_id)
+            if voice:
+                ref = voice.get("reference_file")
+                if ref and os.path.exists(ref):
+                    return ref
         return None
     
-    async def generate_audio(self, text: str, voice_id: str, speed: float = 1.0, style: Optional[str] = None) -> bytes:
+    async def generate_audio(
+        self,
+        text: str,
+        voice_id: str,
+        speed: float = 1.0,
+        style: Optional[str] = None,
+        reference_audio_path: Optional[str] = None,
+    ) -> bytes:
         """
         Generate audio using IndexTTS-2 via Modal endpoint.
         
@@ -102,17 +136,22 @@ class IndexTTS2Provider(VoiceProvider):
         # Convert style to emotion vector
         emo_vector = self._style_to_emotion_vector(style)
         
-        # Get voice reference (if available)
-        voice_ref = self._get_voice_reference_path(voice_id)
+        # Determine reference audio (library or explicit)
+        voice_ref_path = reference_audio_path or self._get_voice_reference_path(voice_id)
+        voice_sample_b64 = None
+        if voice_ref_path and os.path.exists(voice_ref_path):
+            with open(voice_ref_path, 'rb') as f:
+                voice_sample_b64 = base64.b64encode(f.read()).decode('utf-8')
         
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(follow_redirects=True) as client:
             payload = {
                 "text": text,
                 "emo_vector": emo_vector,
                 "emo_alpha": 0.7,  # Moderate emotion influence (0.6-0.8 recommended)
-                "voice_ref": voice_ref,  # Optional voice cloning
                 "use_random": False  # Disable randomness for consistency
             }
+            if voice_sample_b64:
+                payload["voice_sample_b64"] = voice_sample_b64
             
             if style:
                 print(f"[IndexTTS2] Generating with style '{style}': emo_vector={emo_vector}")

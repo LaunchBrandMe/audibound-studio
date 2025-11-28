@@ -134,21 +134,53 @@ class StyleTTS2Worker:
         beta: float = 0.7,
         diffusion_steps: int = 10,
         embedding_scale: float = 1.0,
+        voice_sample_bytes: str = None,  # NEW: Base64 encoded reference audio
     ) -> bytes:
         import numpy as np
         import scipy.io.wavfile
+        import base64
+        import tempfile
+        import os
 
         if not text or not text.strip():
             raise ValueError("Text is required for StyleTTS2 synthesis")
 
+        # Handle voice cloning with reference audio
+        target_voice_path = None
+        temp_file = None
+        
+        if voice_sample_bytes:
+            print("[StyleTTS2] Voice cloning mode enabled")
+            try:
+                # Decode base64 audio
+                audio_data = base64.b64decode(voice_sample_bytes)
+                
+                # Save to temporary file
+                temp_file = tempfile.NamedTemporaryFile(suffix='.wav', delete=False)
+                temp_file.write(audio_data)
+                temp_file.close()
+                target_voice_path = temp_file.name
+                
+                print(f"[StyleTTS2] Loaded reference audio: {len(audio_data)} bytes")
+            except Exception as e:
+                print(f"[StyleTTS2] WARNING: Failed to load reference audio: {e}")
+                print("[StyleTTS2] Falling back to default voice")
+                if temp_file and os.path.exists(temp_file.name):
+                    os.unlink(temp_file.name)
+                target_voice_path = None
+
         wav = self._model.inference(
             text=text.strip(),
-            target_voice_path=None,
+            target_voice_path=target_voice_path,  # Voice cloning!
             alpha=alpha,
             beta=beta,
             diffusion_steps=diffusion_steps,
             embedding_scale=embedding_scale,
         )
+        
+        # Clean up temp file
+        if temp_file and os.path.exists(temp_file.name):
+            os.unlink(temp_file.name)
 
         if not isinstance(wav, np.ndarray):
             raise RuntimeError("StyleTTS2 inference did not return a numpy array")
@@ -175,6 +207,7 @@ def generate_speech(item: Dict[str, Any]):
     beta = float((item or {}).get("beta", 0.7))
     diffusion_steps = int((item or {}).get("diffusion_steps", 10))
     embedding_scale = float((item or {}).get("embedding_scale", 1.0))
+    voice_sample_bytes = (item or {}).get("voice_sample_bytes")  # NEW: Voice cloning
 
     if not text:
         raise HTTPException(status_code=400, detail="Text is required")
@@ -185,6 +218,7 @@ def generate_speech(item: Dict[str, Any]):
         beta=beta,
         diffusion_steps=diffusion_steps,
         embedding_scale=embedding_scale,
+        voice_sample_bytes=voice_sample_bytes,  # NEW: Pass to worker
     )
 
     return Response(
