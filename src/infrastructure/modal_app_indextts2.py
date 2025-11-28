@@ -1,15 +1,27 @@
-import modal
-import io
+"""Modal deployment for IndexTTS2 (expressive zero-shot TTS)."""
 
-# Define the image with IndexTTS-2 and dependencies
-# IndexTTS-2 requires Python 3.8-3.11, CUDA, and specific dependencies
+from pathlib import Path
+import base64
+import shutil
+import subprocess
+import sys
+from typing import List, Optional
+
+import modal
+
+MODEL_DIR = Path("/cache/checkpoints")
+HF_REPO = "https://huggingface.co/IndexTeam/IndexTTS-2"
+OUTPUT_PATH = Path("/tmp/indextts2_output.wav")
+DEFAULT_PROMPT_PATH = Path("/assets/default_indextts2_prompt.wav")
+
 image = (
     modal.Image.debian_slim(python_version="3.10")
-    .apt_install("git", "git-lfs")  # Required for model downloads
+    .apt_install("git", "git-lfs")
+    .run_commands("git lfs install --system")
     .pip_install(
         "torch==2.1.0",
-        "torchaudio==2.1.0", 
-        extra_options="--index-url https://download.pytorch.org/whl/cu121"  # CUDA 12.1
+        "torchaudio==2.1.0",
+        extra_options="--index-url https://download.pytorch.org/whl/cu121",
     )
     .pip_install(
         "transformers",
@@ -20,176 +32,166 @@ image = (
         "fastapi",
     )
     .run_commands(
-        # Clone IndexTTS-2 repository
         "git clone https://github.com/index-tts/index-tts /root/index-tts",
-        # Install IndexTTS-2 dependencies
         "cd /root/index-tts && pip install -e .",
     )
 )
 
 app = modal.App("audibound-indextts2", image=image)
-
-# Use Modal's Volume for model caching
 model_volume = modal.Volume.from_name("indextts2-models", create_if_missing=True)
 
 
-@app.function(
-    gpu="T4",  # NVIDIA T4 GPU (cost-effective, 16GB VRAM)
+@app.cls(
+    gpu="T4",
     volumes={"/cache": model_volume},
-    timeout=600,  # 10 minutes (IndexTTS-2 can be slow)
-    memory=16384,  # 16GB RAM
+    timeout=600,
+    memory=16384,
 )
-def generate_audio(
-    text: str,
-    emo_vector: list = None,
-    emo_alpha: float = 0.7,
-    voice_ref: str = None,
-    use_random: bool = False
-):
-    """
-    Generate audio using IndexTTS-2.
-    
-    Args:
-        text: Text to synthesize
-        emo_vector: 8-float emotion vector [happy, angry, sad, afraid, disgusted, melancholic, surprised, calm]
-        emo_alpha: Emotion influence (0.0-1.0, recommended 0.6-0.8)
-        voice_ref: Optional path to voice cloning reference audio
-        use_random: Whether to use random sampling (reduces fidelity)
-    
-    Returns:
-        bytes: WAV audio data
-    """
-    import sys
-    import os
-    sys.path.insert(0, "/root/index-tts")
-    
-    print(f"[IndexTTS2] === Starting generation ===")
-    print(f"[IndexTTS2] Text: {text[:100]}...")
-    print(f"[IndexTTS2] Emotion vector: {emo_vector}")
-    print(f"[IndexTTS2] Emotion alpha: {emo_alpha}")
-    
-    try:
-        from indextts.infer_v2 import IndexTTS2
-        import soundfile as sf
+class IndexTTS2Worker:
+    def __init__(self) -> None:
+        self._tts = None
+
+    def _ensure_models(self) -> None:
+        """Download checkpoints into the shared volume if missing."""
+        cfg_path = MODEL_DIR / "config.yaml"
+        if cfg_path.exists():
+            print("[IndexTTS2] Using cached checkpoints")
+            return
+
+        MODEL_DIR.mkdir(parents=True, exist_ok=True)
+        tmp_dir = Path("/tmp/indextts2_download")
+        if tmp_dir.exists():
+            shutil.rmtree(tmp_dir)
+
+        print("[IndexTTS2] Downloading model files from Hugging Face…")
+        subprocess.run(["git", "clone", HF_REPO, str(tmp_dir)], check=True)
+        subprocess.run(["git", "-C", str(tmp_dir), "lfs", "install", "--local"], check=True)
+        subprocess.run(["git", "-C", str(tmp_dir), "lfs", "pull"], check=True)
+
+        if MODEL_DIR.exists():
+            shutil.rmtree(MODEL_DIR)
+        shutil.move(str(tmp_dir), str(MODEL_DIR))
+        print(f"[IndexTTS2] Models cached at {MODEL_DIR}")
+
+    def _ensure_default_prompt(self) -> None:
+        """Create a tiny fallback prompt if no real reference audio provided."""
+        if DEFAULT_PROMPT_PATH.exists():
+            return
+        DEFAULT_PROMPT_PATH.parent.mkdir(parents=True, exist_ok=True)
+        print("[IndexTTS2] Creating fallback prompt audio…")
         import numpy as np
-        
-        # Model paths in cache volume
-        cfg_path = "/cache/checkpoints/config.yaml"
-        model_dir = "/cache/checkpoints"
-        
-        # Download models if they don't exist
-        if not os.path.exists(cfg_path):
-            print("[IndexTTS2] Downloading model files...")
-            import subprocess
-            
-            # Create checkpoints directory
-            os.makedirs(model_dir, exist_ok=True)
-            
-            # Download from HuggingFace
-            subprocess.run([
-                "git", "clone",
-                "https://huggingface.co/IndexTeam/IndexTTS-2",
-                model_dir
-            ], check=True)
-            
-            print(f"[IndexTTS2] Models downloaded to {model_dir}")
-        
-        # Initialize IndexTTS-2
-        print("[IndexTTS2] Initializing model...")
-        tts = IndexTTS2(
-            cfg_path=cfg_path,
-            model_dir=model_dir,
-            use_fp16=True,  # Use FP16 for faster inference
-            use_cuda_kernel=True,  # Enable CUDA kernels for speed
-            use_deepspeed=False  # DeepSpeed can be slower on some systems
+        import soundfile as sf
+
+        sr = 24000
+        duration = 1.5
+        t = np.linspace(0, duration, int(sr * duration), endpoint=False)
+        audio = 0.02 * np.sin(2 * np.pi * 220 * t)
+        sf.write(DEFAULT_PROMPT_PATH, audio.astype(np.float32), sr)
+        print(f"[IndexTTS2] Fallback prompt written to {DEFAULT_PROMPT_PATH}")
+
+    @modal.enter()
+    def setup(self) -> None:
+        """Load IndexTTS2 once per container for fast warm requests."""
+        sys.path.insert(0, "/root/index-tts")
+        self._ensure_models()
+        self._ensure_default_prompt()
+
+        from indextts.infer_v2 import IndexTTS2
+
+        print("[IndexTTS2] Initializing model…")
+        self._tts = IndexTTS2(
+            cfg_path=str(MODEL_DIR / "config.yaml"),
+            model_dir=str(MODEL_DIR),
+            use_fp16=True,
+            use_cuda_kernel=True,
+            use_deepspeed=False,
         )
-        
-        print("[IndexTTS2] Model loaded successfully")
-        
-        # Default emotion vector if not provided
-        if emo_vector is None:
-            emo_vector = [0.2, 0, 0, 0, 0, 0, 0, 0.6]  # Neutral: slight happy + calm
-        
-        # Generate audio to temporary file
-        output_path = "/tmp/indextts2_output.wav"
-        
-        print(f"[IndexTTS2] Generating speech...")
-        tts.infer(
-            spk_audio_prompt=voice_ref,  # Voice cloning (None = default voice)
+        print("[IndexTTS2] Model ready")
+
+    def _sanitize_vector(self, vector: Optional[List[float]]) -> List[float]:
+        default_vector = [0.2, 0, 0, 0, 0, 0, 0, 0.6]
+        if not vector:
+            return default_vector
+        try:
+            cleaned = [float(v) for v in vector][:8]
+            if len(cleaned) != 8:
+                return default_vector
+            return cleaned
+        except (TypeError, ValueError):
+            return default_vector
+
+    @modal.method()
+    def generate(
+        self,
+        text: str,
+        emo_vector: Optional[List[float]] = None,
+        emo_alpha: float = 0.7,
+        voice_sample_b64: Optional[str] = None,
+        use_random: bool = False,
+    ) -> bytes:
+        if not text or not text.strip():
+            raise ValueError("Text is required")
+        if self._tts is None:
+            raise RuntimeError("IndexTTS2 model is not initialized")
+
+        emo_vector = self._sanitize_vector(emo_vector)
+        prompt_path = DEFAULT_PROMPT_PATH
+        temp_prompt = None
+        if voice_sample_b64:
+            prompt_bytes = base64.b64decode(voice_sample_b64)
+            temp_prompt = Path("/tmp/custom_voice_prompt.wav")
+            temp_prompt.write_bytes(prompt_bytes)
+            prompt_path = temp_prompt
+
+        if OUTPUT_PATH.exists():
+            OUTPUT_PATH.unlink()
+
+        print("[IndexTTS2] Generating speech…")
+        self._tts.infer(
+            spk_audio_prompt=str(prompt_path),
             text=text,
-            output_path=output_path,
+            output_path=str(OUTPUT_PATH),
             emo_vector=emo_vector,
-            emo_alpha=emo_alpha,
-            use_random=use_random,
-            verbose=True
+            emo_alpha=float(emo_alpha),
+            use_random=bool(use_random),
+            verbose=True,
         )
-        
-        print(f"[IndexTTS2] Audio generated at {output_path}")
-        
-        # Read the generated WAV file
-        with open(output_path, 'rb') as f:
-            audio_bytes = f.read()
-        
+
+        audio_bytes = OUTPUT_PATH.read_bytes()
         print(f"[IndexTTS2] Generated {len(audio_bytes)} bytes")
-        print(f"[IndexTTS2] === Success! ===")
-        
+        if temp_prompt and temp_prompt.exists():
+            temp_prompt.unlink()
         return audio_bytes
-        
-    except Exception as e:
-        print(f"[IndexTTS2] !!! ERROR: {type(e).__name__}: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        raise
+
+
+worker = IndexTTS2Worker()
 
 
 @app.function()
-@modal.web_endpoint(method="POST")
+@modal.fastapi_endpoint(method="POST")
 def generate_speech(item: dict):
-    """
-    Web endpoint for IndexTTS-2 generation.
-    Expects JSON: {
-        "text": "...",
-        "emo_vector": [0.8, 0, 0, 0, 0, 0, 0.2, 0],
-        "emo_alpha": 0.7,
-        "voice_ref": null,
-        "use_random": false
-    }
-    """
+    from fastapi import HTTPException
     from fastapi.responses import Response
-    
-    print(f"[Endpoint] Received IndexTTS-2 request")
-    
-    text = item.get("text")
-    emo_vector = item.get("emo_vector", [0.2, 0, 0, 0, 0, 0, 0, 0.6])
-    emo_alpha = item.get("emo_alpha", 0.7)
-    voice_ref = item.get("voice_ref")
-    use_random = item.get("use_random", False)
-    
+
+    text = (item or {}).get("text", "").strip()
     if not text:
-        print("[Endpoint] ERROR: No text provided")
-        return {"error": "No text provided"}
-    
-    try:
-        # Call the generate function
-        audio_bytes = generate_audio.remote(
-            text=text,
-            emo_vector=emo_vector,
-            emo_alpha=emo_alpha,
-            voice_ref=voice_ref,
-            use_random=use_random
-        )
-        print(f"[Endpoint] Success! Returning {len(audio_bytes)} bytes")
-        
-        # Return as WAV file
-        return Response(
-            content=audio_bytes,
-            media_type="audio/wav",
-            headers={
-                "Content-Disposition": "attachment; filename=speech.wav"
-            }
-        )
-    except Exception as e:
-        print(f"[Endpoint] Error: {e}")
-        import traceback
-        traceback.print_exc()
-        raise
+        raise HTTPException(status_code=400, detail="Text is required")
+
+    emo_vector = item.get("emo_vector")
+    emo_alpha = float(item.get("emo_alpha", 0.7))
+    voice_sample_b64 = item.get("voice_sample_b64")
+    use_random = bool(item.get("use_random", False))
+
+    audio_bytes = worker.generate.remote(
+        text=text,
+        emo_vector=emo_vector,
+        emo_alpha=emo_alpha,
+        voice_sample_b64=voice_sample_b64,
+        use_random=use_random,
+    )
+
+    return Response(
+        content=audio_bytes,
+        media_type="audio/wav",
+        headers={"Content-Disposition": "attachment; filename=indextts2.wav"},
+    )

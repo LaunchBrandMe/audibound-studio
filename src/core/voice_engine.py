@@ -3,9 +3,18 @@ import httpx
 import os
 from typing import Optional
 
+from src.core.sesame_provider import SesameProvider
+
 class VoiceProvider(ABC):
     @abstractmethod
-    async def generate_audio(self, text: str, voice_id: str, speed: float = 1.0, style: Optional[str] = None) -> bytes:
+    async def generate_audio(
+        self,
+        text: str,
+        voice_id: str,
+        speed: float = 1.0,
+        style: Optional[str] = None,
+        reference_audio_path: Optional[str] = None,
+    ) -> bytes:
         pass
 
 class KokoroProvider(VoiceProvider):
@@ -24,36 +33,49 @@ class KokoroProvider(VoiceProvider):
         """
         Map ABML style to Kokoro prosody parameters.
         Returns speed and pitch adjustments based on emotional context.
+        
+        UPDATED: More aggressive parameters for dramatic performance
         """
         if not style:
             return {'speed': 1.0, 'pitch': 0.0}
         
         style_lower = style.lower()
         
-        # Whispering: slower, lower pitch
-        if 'whisper' in style_lower or 'quiet' in style_lower:
-            return {'speed': 0.85, 'pitch': -5}
+        # Whispering: much slower, lower pitch
+        if 'whisper' in style_lower or 'quiet' in style_lower or 'soft' in style_lower:
+            return {'speed': 0.7, 'pitch': -8}
         
-        # Shouting/Angry: faster, higher pitch
+        # Shouting/Angry: much faster, higher pitch
         elif any(word in style_lower for word in ['shout', 'yell', 'angry', 'furious']):
-            return {'speed': 1.2, 'pitch': 8}
+            return {'speed': 1.4, 'pitch': 12}
         
         # Excited/Urgent: faster, higher pitch
         elif any(word in style_lower for word in ['excit', 'urgent', 'hurried', 'rushed']):
-            return {'speed': 1.15, 'pitch': 5}
+            return {'speed': 1.3, 'pitch': 10}
         
         # Sad/Melancholy/Tired: slower, lower pitch
         elif any(word in style_lower for word in ['sad', 'melancholy', 'tired', 'weary', 'somber']):
-            return {'speed': 0.9, 'pitch': -6}
+            return {'speed': 0.75, 'pitch': -10}
         
-        # Cheerful/Happy: slightly faster, slightly higher pitch
+        # Cheerful/Happy: faster, higher pitch
         elif any(word in style_lower for word in ['cheerful', 'happy', 'joyful']):
-            return {'speed': 1.05, 'pitch': 3}
+            return {'speed': 1.2, 'pitch': 8}
+        
+        # Calm: slightly slower
+        elif any(word in style_lower for word in ['calm', 'peaceful', 'serene']):
+            return {'speed': 0.9, 'pitch': -3}
         
         # Default: neutral speed and pitch
         return {'speed': 1.0, 'pitch': 0.0}
 
-    async def generate_audio(self, text: str, voice_id: str, speed: float = 1.0, style: Optional[str] = None) -> bytes:
+    async def generate_audio(
+        self,
+        text: str,
+        voice_id: str,
+        speed: float = 1.0,
+        style: Optional[str] = None,
+        reference_audio_path: Optional[str] = None,
+    ) -> bytes:
         """
         Calls the Modal.com endpoint to generate audio using Kokoro.
         Now supports expressive speech via speed and pitch control.
@@ -114,7 +136,14 @@ class ElevenLabsProvider(VoiceProvider):
 class MockProvider(VoiceProvider):
     """Local mock TTS for testing - generates simple sine wave audio"""
     
-    async def generate_audio(self, text: str, voice_id: str, speed: float = 1.0, style: Optional[str] = None) -> bytes:
+    async def generate_audio(
+        self,
+        text: str,
+        voice_id: str,
+        speed: float = 1.0,
+        style: Optional[str] = None,
+        reference_audio_path: Optional[str] = None,
+    ) -> bytes:
         import numpy as np
         import scipy.io.wavfile
         import io
@@ -158,6 +187,8 @@ def get_voice_provider(provider_type: str = "kokoro", **kwargs) -> VoiceProvider
     elif provider_type == "indextts2":
         from src.core.indextts2_provider import IndexTTS2Provider
         return IndexTTS2Provider(modal_url=kwargs.get("modal_url"))
+    elif provider_type == "sesame":
+        return SesameProvider(modal_url=kwargs.get("modal_url"))
     elif provider_type == "elevenlabs":
         return ElevenLabsProvider(api_key=kwargs.get("api_key"))
     elif provider_type == "mock":

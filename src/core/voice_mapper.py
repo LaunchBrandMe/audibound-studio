@@ -11,21 +11,65 @@ class VoiceMapper:
     # Available Kokoro voices (from Kokoro-ONNX documentation)
     KOKORO_VOICES = {
         # American Female voices
-        "af_sarah": "Young, energetic American female",
-        "af_bella": "Warm, mature American female",
-        "af_nicole": "Neutral, professional American female",
-        "af_sky": "Bright, enthusiastic American female",
+        "kokoro:af_sarah": "Young, energetic American female",
+        "kokoro:af_bella": "Warm, mature American female",
+        "kokoro:af_nicole": "Neutral, professional American female",
+        "kokoro:af_sky": "Bright, enthusiastic American female",
         
         # American Male voices
-        "am_adam": "Mature, authoritative American male",
-        "am_michael": "Strong, confident American male",
+        "kokoro:am_adam": "Mature, authoritative American male",
+        "kokoro:am_michael": "Strong, confident American male",
         
         # British voices
-        "bf_emma": "Refined British female",
-        "bf_isabella": "Elegant British female",
-        "bm_george": "Distinguished British male",
-        "bm_lewis": "Warm British male",
+        "kokoro:bf_emma": "Refined British female",
+        "kokoro:bf_isabella": "Elegant British female",
+        "kokoro:bm_george": "Distinguished British male",
+        "kokoro:bm_lewis": "Warm British male",
     }
+    
+    @classmethod
+    def get_all_available_voices(cls):
+        """
+        Get all available voices from all TTS engines.
+        Returns a dictionary of {voice_id: description} with engine prefixes.
+        """
+        all_voices = cls.KOKORO_VOICES.copy()
+        
+        # Import and merge voices from other providers
+        try:
+            from src.core.styletts2_provider import StyleTTS2Provider
+            all_voices.update(StyleTTS2Provider.get_available_voices())
+        except ImportError:
+            pass
+        
+        try:
+            from src.core.sesame_provider import SesameProvider
+            all_voices.update(SesameProvider.get_available_voices())
+        except ImportError:
+            pass
+        
+        try:
+            from src.core.indextts2_provider import IndexTTS2Provider
+            all_voices.update(IndexTTS2Provider.get_available_voices())
+        except ImportError:
+            pass
+
+        # Custom voices from library
+        try:
+            from src.core.voice_library import get_voice_library
+            voice_lib = get_voice_library()
+            for voice in voice_lib.get_all_voices():
+                engine = (voice.get('engine') or 'styletts2').lower()
+                custom_id = voice.get('id')
+                if not custom_id:
+                    continue
+                key = f"{engine}:custom_{custom_id}"
+                label = f"{voice.get('name', 'Custom Voice')} (Custom)"
+                all_voices[key] = label
+        except ImportError:
+            pass
+
+        return all_voices
     
     def __init__(self, bible: SeriesBible):
         """Initialize with a Series Bible containing character profiles."""
@@ -39,7 +83,7 @@ class VoiceMapper:
         Uses keywords from voice_ref and description to make intelligent choices.
         """
         # Reserve neutral voice for Narrator
-        self.character_voice_map["Narrator"] = "af_nicole"
+        self.character_voice_map["Narrator"] = "kokoro:af_nicole"
         
         # Track used voices to provide variety
         used_female_voices = set()
@@ -116,28 +160,28 @@ class VoiceMapper:
         if is_male:
             if is_british:
                 if 'warm' in text or 'nurturing' in text:
-                    return "bm_lewis"
-                return "bm_george"
+                    return "kokoro:bm_lewis"
+                return "kokoro:bm_george"
             else:  # American male
                 if is_mature or 'authority' in text or 'confident' in text:
-                    return "am_adam"
-                return "am_michael"
+                    return "kokoro:am_adam"
+                return "kokoro:am_michael"
         
         else:  # Female (default if gender unclear)
             if is_british:
                 if 'elegant' in text or 'refined' in text:
-                    return "bf_isabella"
-                return "bf_emma"
+                    return "kokoro:bf_isabella"
+                return "kokoro:bf_emma"
             else:  # American female
                 if is_young and 'energetic' in text:
-                    return "af_sarah" if "af_sarah" not in used_female_voices else "af_sky"
+                    return "kokoro:af_sarah" if "kokoro:af_sarah" not in used_female_voices else "kokoro:af_sky"
                 elif is_mature or 'warm' in text or 'mother' in text or 'nurturing' in text:
-                    return "af_bella"
+                    return "kokoro:af_bella"
                 elif 'professional' in text or 'neutral' in text:
-                    return "af_nicole"
+                    return "kokoro:af_nicole"
                 else:
                     # Default: young energetic
-                    return "af_sarah" if "af_sarah" not in used_female_voices else "af_sky"
+                    return "kokoro:af_sarah" if "kokoro:af_sarah" not in used_female_voices else "kokoro:af_sky"
         
     def get_voice_for_speaker(self, speaker_name: str) -> str:
         """
@@ -148,9 +192,9 @@ class VoiceMapper:
             speaker_name: Name of the character/speaker
             
         Returns:
-            Kokoro voice ID (e.g., "af_sarah")
+            Voice ID with engine prefix (e.g., "kokoro:af_sarah")
         """
-        return self.character_voice_map.get(speaker_name, "af_nicole")
+        return self.character_voice_map.get(speaker_name, "kokoro:af_nicole")
     
     def get_all_mappings(self) -> Dict[str, str]:
         """Return all character → voice mappings."""
