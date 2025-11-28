@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloning Lab - Audibound Studio</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body class="voice-page">
+    <div class="page-shell">
+        <header class="page-hero">
+            <div>
+                <p class="muted" style="margin:0; letter-spacing:0.08em; text-transform:uppercase; font-size:0.8rem;">
+                    Library</p>
+                <h1>🧪 Cloning Lab</h1>
+                <p>Upload and curate expressive reference voices for cloning.</p>
+            </div>
+            <nav>
+                <a href="/">← Back to Projects</a>
+            </nav>
+        </header>
+
+        <section class="card upload-card">
+            <h2 class="section-title">Upload New Voice</h2>
+            <div id="upload-area" class="dropzone">
+                <div class="dropzone__icon">📎</div>
+                <p class="dropzone__title" style="margin:0; font-size:1.05rem;">Drag & drop audio or click to browse</p>
+                <p class="dropzone__status" id="upload-status">Supports WAV / MP3 / FLAC (5–30 seconds, max 10MB)</p>
+                <input type="file" id="file-input" accept=".wav,.mp3,.m4a,.flac" style="display:none;" />
+            </div>
+
+            <div id="upload-form" class="upload-form">
+                <div class="field" style="flex:1;">
+                    <label for="voice-name">Voice Name</label>
+                    <input type="text" id="voice-name" placeholder="e.g., Sarah – Young Energetic" />
+                </div>
+                <div class="field" style="flex:1;">
+                    <label for="voice-tags">Tags (comma separated)</label>
+                    <input type="text" id="voice-tags" placeholder="female, british, storyteller" />
+                </div>
+                <div class="field" style="max-width:240px;">
+                    <label for="voice-engine">Engine</label>
+                    <select id="voice-engine">
+                        <option value="styletts2">StyleTTS2</option>
+                        <option value="sesame">Sesame CSM</option>
+                        <option value="indextts2">IndexTTS2 (Experimental)</option>
+                    </select>
+                </div>
+                <div style="display:flex; align-items:flex-end;">
+                    <button class="primary-btn" onclick="uploadVoice()">Upload Voice</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="voice-toolbar">
+                <h2 class="section-title">Your Voices (<span id="voice-count">0</span>)</h2>
+                <input type="text" id="search-input" placeholder="Search voices..." onkeyup="searchVoices()" />
+            </div>
+            <div id="voice-grid" class="voice-grid"></div>
+            <div id="empty-state" class="empty-state">
+                <span>🎭</span>
+                <p>No voices yet. Upload your first reference audio!</p>
+            </div>
+        </section>
+    </div>
+
+    <section id="test-panel">
+        <div class="test-panel__inner">
+            <div class="test-panel__header">
+                <h3>Test Voice</h3>
+                <button class="test-panel__close" onclick="closeTestPanel()">×</button>
+            </div>
+            <div id="test-voice-info" class="muted" style="font-size:0.9rem;"></div>
+            <textarea id="test-text">This is a test of the voice cloning system.</textarea>
+            <button class="primary-btn" onclick="generateTest()">🔊 Generate Test Audio</button>
+            <div id="test-result" class="muted"></div>
+
+            <div class="samples-list" style="margin-top:20px; border-top:1px solid var(--border); padding-top:16px;">
+                <h4 style="margin:0 0 12px 0; font-size:0.9rem; color:var(--text-muted);">Recent Samples</h4>
+                <div id="samples-container" style="display:flex; flex-direction:column; gap:8px;"></div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        const API_URL = '';
+        let selectedFile = null;
+        let currentTestVoice = null;
+        let voices = [];
+
+        const uploadArea = document.getElementById('upload-area');
+        const uploadForm = document.getElementById('upload-form');
+        const fileInput = document.getElementById('file-input');
+        const uploadStatus = document.getElementById('upload-status');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dropzone--active');
+        });
+        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dropzone--active'));
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dropzone--active');
+            if (e.dataTransfer.files.length) {
+                handleFileSelect(e.dataTransfer.files[0]);
+            }
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            selectedFile = file;
+            uploadForm.style.display = 'grid';
+            uploadForm.style.gridTemplateColumns = 'repeat(auto-fit, minmax(220px, 1fr))';
+            document.getElementById('voice-name').value = file.name.replace(/\.[^/.]+$/, '');
+            uploadStatus.textContent = `Selected: ${file.name}`;
+        }
+
+        async function uploadVoice() {
+            if (!selectedFile) return alert('Select an audio file first');
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('name', document.getElementById('voice-name').value);
+            formData.append('tags', document.getElementById('voice-tags').value);
+            formData.append('engine', document.getElementById('voice-engine').value);
+
+            try {
+                const response = await fetch(`${API_URL}/voices/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Upload failed');
+                }
+                selectedFile = null;
+                uploadForm.style.display = 'none';
+                uploadStatus.textContent = 'Supports WAV / MP3 / FLAC (5–30 seconds, max 10MB)';
+                document.getElementById('voice-name').value = '';
+                document.getElementById('voice-tags').value = '';
+                fileInput.value = '';
+                loadVoices();
+                alert('Voice uploaded successfully!');
+            } catch (error) {
+                alert(`Upload failed: ${error.message}`);
+            }
+        }
+
+        async function loadVoices() {
+            try {
+                const response = await fetch(`${API_URL}/voices`);
+                const data = await response.json();
+                voices = data.voices || [];
+                renderVoices(voices);
+            } catch (error) {
+                console.error('Error loading voices:', error);
+            }
+        }
+
+        function renderVoices(list) {
+            const grid = document.getElementById('voice-grid');
+            const emptyState = document.getElementById('empty-state');
+            const countSpan = document.getElementById('voice-count');
+
+            countSpan.textContent = list.length;
+
+            if (!list.length) {
+                grid.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            grid.innerHTML = list.map(voice => {
+                const created = voice.created_at ? new Date(voice.created_at).toLocaleDateString() : '';
+                const duration = typeof voice.duration_seconds === 'number'
+                    ? `${voice.duration_seconds.toFixed(1)}s`
+                    : '';
+                const engineLabel = (voice.engine || '').toUpperCase();
+                return `
+                <article class="voice-card">
+                    <div class="voice-card__head">
+                        <div>
+                            <p class="voice-card__name">${voice.name}</p>
+                            <p class="voice-card__meta">${duration ? `${duration} · ` : ''}${created}</p>
+                        </div>
+                        <span class="badge">${engineLabel}</span>
+                    </div>
+                    ${(voice.tags && voice.tags.length) ? `<div class="tag-list">${voice.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</div>` : ''}
+                    <div class="voice-card__actions">
+                        <button class="primary-btn" style="flex:1;" onclick="testVoice('${voice.id}')">▶ Test</button>
+                        <button class="danger-btn" style="flex:0 0 auto; padding:10px 16px;" onclick="deleteVoice('${voice.id}')">🗑</button>
+                    </div>
+                </article>`;
+            }).join('');
+        }
+
+        function searchVoices() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const filtered = voices.filter(v =>
+                v.name.toLowerCase().includes(query) ||
+                (v.tags || []).some(tag => tag.toLowerCase().includes(query))
+            );
+            renderVoices(filtered);
+        }
+
+        function testVoice(voiceId) {
+            const voice = voices.find(v => v.id === voiceId);
+            if (!voice) return;
+
+            currentTestVoice = voice;
+            document.getElementById('test-panel').style.display = 'block';
+            document.getElementById('test-voice-info').textContent = `${voice.name} · ${voice.engine}`;
+            document.getElementById('test-result').textContent = '';
+            loadVoiceSamples(voiceId);
+        }
+
+        async function loadVoiceSamples(voiceId) {
+            const container = document.getElementById('samples-container');
+            container.innerHTML = '<p class="muted" style="font-size:0.8rem;">Loading history...</p>';
+
+            try {
+                const response = await fetch(`${API_URL}/voices/${voiceId}/samples`);
+                const data = await response.json();
+
+                if (!data.samples || !data.samples.length) {
+                    container.innerHTML = '<p class="muted" style="font-size:0.8rem;">No samples yet</p>';
+                    return;
+                }
+
+                container.innerHTML = data.samples.map(sample => {
+                    const date = new Date(sample.timestamp * 1000);
+                    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    const dateStr = date.toLocaleDateString();
+
+                    return `
+                    <div style="background:var(--bg-card); padding:8px; border-radius:6px; display:flex; align-items:center; gap:10px; font-size:0.9rem;">
+                        <div style="flex:1;">
+                            <div style="font-weight:500;">${timeStr}</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted);">${dateStr}</div>
+                        </div>
+                        <audio controls src="${sample.url}" style="height:32px; max-width:160px;"></audio>
+                        <a href="${sample.url}" download title="Download" style="color:var(--text-muted); text-decoration:none;">⬇</a>
+                    </div>`;
+                }).join('');
+
+            } catch (error) {
+                console.error('Error loading samples:', error);
+                container.innerHTML = '<p class="muted" style="font-size:0.8rem; color:var(--danger);">Failed to load history</p>';
+            }
+        }
+
+        function closeTestPanel() {
+            document.getElementById('test-panel').style.display = 'none';
+            currentTestVoice = null;
+        }
+
+        async function generateTest() {
+            if (!currentTestVoice) return;
+
+            const text = document.getElementById('test-text').value.trim();
+            if (!text) return alert('Enter text to test.');
+
+            const resultDiv = document.getElementById('test-result');
+            resultDiv.textContent = 'Generating...';
+
+            try {
+                const response = await fetch(`${API_URL}/voices/${currentTestVoice.id}/test`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Failed to generate audio');
+                }
+                if (!data.success || !data.audio_url) {
+                    throw new Error('Audio generation failed');
+                }
+
+                const audioUrl = data.audio_url;
+                resultDiv.innerHTML = `
+                    <p style="margin-bottom:8px; color:#10b981;">Preview ready</p>
+                    <audio controls src="${audioUrl}" autoplay></audio>
+                    <a href="${audioUrl}" download style="display:inline-block; margin-top:8px; color:var(--text); text-decoration:none;">⬇ Download</a>
+                `;
+
+                // Refresh samples list to show the new one
+                loadVoiceSamples(currentTestVoice.id);
+
+            } catch (error) {
+                resultDiv.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function deleteVoice(voiceId) {
+            if (!confirm('Delete this voice permanently?')) return;
+            try {
+                const response = await fetch(`${API_URL}/voices/${voiceId}`, { method: 'DELETE' });
+                if (!response.ok) throw new Error('Failed to delete voice');
+                loadVoices();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        loadVoices();
+    </script>
+</body>
+
+</html>
