@@ -189,6 +189,9 @@ def get_voice_provider(provider_type: str = "kokoro", **kwargs) -> VoiceProvider
         return IndexTTS2Provider(modal_url=kwargs.get("modal_url"))
     elif provider_type == "sesame":
         return SesameProvider(modal_url=kwargs.get("modal_url"))
+    elif provider_type == "dia":
+        from src.core.dia_provider import DiaProvider
+        return DiaProvider(modal_url=kwargs.get("modal_url"))
     elif provider_type == "elevenlabs":
         return ElevenLabsProvider(api_key=kwargs.get("api_key"))
     elif provider_type == "mock":

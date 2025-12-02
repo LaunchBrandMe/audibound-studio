@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Studio · Multi-Track Player</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        .player-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 24px;
+            height: calc(100vh - 100px);
+        }
+
+        .sidebar {
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .story-item {
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid #f1f5f9;
+            color: #111827;
+        }
+
+        .story-item:hover {
+            background: #f8fafc;
+        }
+
+        .story-item.active {
+            background: #eff6ff;
+            border-left: 3px solid #2563eb;
+        }
+
+        .mixer-panel {
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .track-strip {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            max-width: 600px;
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .track-icon {
+            width: 40px;
+            height: 40px;
+            background: #e2e8f0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            font-size: 1.2rem;
+        }
+
+        .track-info {
+            flex: 1;
+        }
+
+        .track-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .track-status {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .track-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .mute-btn {
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            color: #64748b;
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .mute-btn.active {
+            background: #fee2e2;
+            color: #ef4444;
+            border-color: #fca5a5;
+        }
+
+        .volume-slider {
+            width: 100px;
+        }
+
+        .master-controls {
+            margin-top: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .transport-btns {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .transport-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: none;
+            background: #2563eb;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+            transition: transform 0.1s;
+        }
+
+        .transport-btn:active {
+            transform: scale(0.95);
+        }
+
+        .progress-container {
+            width: 100%;
+            background: #e2e8f0;
+            height: 6px;
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: #2563eb;
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-top: 8px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+
+<body class="voice-page" style="color: #111827;">
+    <div class="page-shell">
+        <header class="page-hero"
+            style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0; color: white;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <p class="muted"
+                        style="margin:0; letter-spacing:0.08em; text-transform:uppercase; font-size:0.8rem;">Studio Tool
+                    </p>
+                    <h1 style="margin:4px 0 0 0;">🎚️ Multi-Track Player</h1>
+                </div>
+                <nav>
+                    <a href="/" style="color: white;">← Back to Projects</a>
+                </nav>
+            </div>
+        </header>
+
+        <div class="player-grid">
+            <!-- Sidebar: Story List -->
+            <div class="sidebar">
+                <h3
+                    style="margin-top:0; margin-bottom:16px; font-size:0.9rem; text-transform:uppercase; color:#64748b;">
+                    Stories</h3>
+                <div id="story-list">
+                    <div class="empty-state">Loading stories...</div>
+                </div>
+            </div>
+
+            <!-- Main: Mixer -->
+            <div class="mixer-panel">
+                <div id="mixer-content" style="width:100%; display:flex; flex-direction:column; align-items:center;">
+                    <div class="empty-state" style="margin-top:100px;">
+                        <p>Select a story from the sidebar to load stems.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStory = null;
+        let audioContext = null;
+        let sources = {}; // { voice: AudioNode, sfx: AudioNode, music: AudioNode }
+        let gains = {};   // { voice: GainNode, sfx: GainNode, music: GainNode }
+        let audioElements = {}; // { voice: HTMLAudioElement, ... }
+        let isPlaying = false;
+        let duration = 0;
+        let animationFrame = null;
+
+        // --- Init ---
+        async function loadStories() {
+            try {
+                const res = await fetch('/stories');
+                const data = await res.json();
+                renderStoryList(data.stories);
+            } catch (err) {
+                console.error(err);
+                document.getElementById('story-list').innerHTML = '<p class="error">Failed to load stories.</p>';
+            }
+        }
+
+        function renderStoryList(stories) {
+            const container = document.getElementById('story-list');
+            if (stories.length === 0) {
+                container.innerHTML = '<div class="empty-state">No stories found with audio files.</div>';
+                return;
+            }
+
+            container.innerHTML = stories.map(story => {
+                const files = story.audio_files || {};
+                const badges = [];
+                if (files.voice) badges.push('<span style="font-size:0.7rem; background:#dbeafe; color:#1e40af; padding:2px 6px; border-radius:4px;">Voice</span>');
+                if (files.sfx) badges.push('<span style="font-size:0.7rem; background:#fce7f3; color:#9d174d; padding:2px 6px; border-radius:4px;">SFX</span>');
+                if (files.music) badges.push('<span style="font-size:0.7rem; background:#dcfce7; color:#166534; padding:2px 6px; border-radius:4px;">Music</span>');
+                if (files.mix) badges.push('<span style="font-size:0.7rem; background:#fef3c7; color:#92400e; padding:2px 6px; border-radius:4px;">Mix</span>');
+                if (files.other) badges.push('<span style="font-size:0.7rem; background:#e5e7eb; color:#374151; padding:2px 6px; border-radius:4px;">Other</span>');
+
+                return `
+                <div class="story-item" onclick="loadStory('${story.id}')" id="story-${story.id}">
+                    <div style="font-weight:600;">${story.title}</div>
+                    <div class="muted" style="font-size:0.8rem;">${new Date(story.timestamp).toLocaleDateString()}</div>
+                    <div style="display:flex; gap:4px; margin-top:4px; flex-wrap:wrap;">
+                        ${badges.join('')}
+                    </div>
+                </div>
+            `;
+            }).join('');
+
+            // Store data globally for easy access
+            window.storiesData = stories;
+        }
+
+        async function loadStory(storyId) {
+            // UI Update
+            document.querySelectorAll('.story-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`story-${storyId}`).classList.add('active');
+
+            const story = window.storiesData.find(s => s.id === storyId);
+            if (!story) return;
+            currentStory = story;
+
+            // Reset Audio
+            stopAudio();
+            audioElements = {};
+
+            const files = story.audio_files || {};
+
+            // Render Mixer - show ALL available files
+            const mixer = document.getElementById('mixer-content');
+
+            let tracksHTML = '';
+            if (files.voice && files.voice.length) {
+                files.voice.forEach((file, idx) => {
+                    tracksHTML += renderTrackStrip(`voice_${idx}`, '🎙️', file.name, file.url);
+                });
+            }
+            if (files.music && files.music.length) {
+                files.music.forEach((file, idx) => {
+                    tracksHTML += renderTrackStrip(`music_${idx}`, '🎵', file.name, file.url);
+                });
+            }
+            if (files.sfx && files.sfx.length) {
+                files.sfx.forEach((file, idx) => {
+                    tracksHTML += renderTrackStrip(`sfx_${idx}`, '⚡', file.name, file.url);
+                });
+            }
+            if (files.mix && files.mix.length) {
+                files.mix.forEach((file, idx) => {
+                    tracksHTML += renderTrackStrip(`mix_${idx}`, '🎧', file.name, file.url);
+                });
+            }
+            if (files.other && files.other.length) {
+                files.other.forEach((file, idx) => {
+                    tracksHTML += renderTrackStrip(`other_${idx}`, '📁', file.name, file.url);
+                });
+            }
+
+            mixer.innerHTML = `
+                <h2 style="margin-bottom:30px;">${story.title}</h2>
+                
+                ${tracksHTML}
+                
+                <div class="master-controls">
+                    <div class="transport-btns">
+                        <button class="transport-btn" onclick="togglePlay()">▶</button>
+                        <button class="transport-btn" style="background:#ef4444;" onclick="stopAudio()">⏹</button>
+                    </div>
+                    
+                    <div class="progress-container" onclick="seek(event)">
+                        <div class="progress-bar" id="progress-bar"></div>
+                    </div>
+                    <div class="time-display">
+                        <span id="current-time">0:00</span>
+                        <span id="total-time">0:00</span>
+                    </div>
+                </div>
+            `;
+
+            // Initialize ALL audio elements
+            const promises = [];
+            const allFiles = [...(files.voice || []), ...(files.music || []), ...(files.sfx || []), ...(files.mix || []), ...(files.other || [])];
+            allFiles.forEach((file, idx) => {
+                const category = files.voice?.includes(file) ? 'voice' :
+                    files.music?.includes(file) ? 'music' :
+                        files.sfx?.includes(file) ? 'sfx' :
+                            files.mix?.includes(file) ? 'mix' : 'other';
+                const trackId = `${category}_${files[category].indexOf(file)}`;
+                promises.push(initTrack(trackId, file.url));
+            });
+
+            await Promise.all(promises);
+            updateDuration();
+        }
+
+        function renderTrackStrip(type, icon, label, url) {
+            if (!url) return '';
+            return `
+                <div class="track-strip">
+                    <div class="track-icon">${icon}</div>
+                    <div class="track-info">
+                        <div class="track-name">${label}</div>
+                        <div class="track-status">Ready</div>
+                    </div>
+                    <div class="track-controls">
+                        <button class="mute-btn" id="mute-${type}" onclick="toggleMute('${type}')">🔇</button>
+                        <input type="range" class="volume-slider" min="0" max="1" step="0.1" value="1" oninput="setVolume('${type}', this.value)">
+                    </div>
+                </div>
+            `;
+        }
+
+        function initTrack(type, url) {
+            return new Promise((resolve) => {
+                const audio = new Audio(url);
+                audio.preload = 'auto';
+                audioElements[type] = audio;
+
+                audio.addEventListener('loadedmetadata', () => {
+                    resolve();
+                });
+
+                // Error handling
+                audio.addEventListener('error', () => {
+                    console.error(`Failed to load ${type}`);
+                    resolve(); // Resolve anyway to not block others
+                });
+            });
+        }
+
+        function updateDuration() {
+            let maxDur = 0;
+            Object.values(audioElements).forEach(el => {
+                if (el.duration && !isNaN(el.duration) && el.duration > maxDur) {
+                    maxDur = el.duration;
+                }
+            });
+            duration = maxDur;
+            document.getElementById('total-time').textContent = formatTime(duration);
+        }
+
+        function togglePlay() {
+            if (isPlaying) {
+                pauseAudio();
+            } else {
+                playAudio();
+            }
+        }
+
+        function playAudio() {
+            Object.values(audioElements).forEach(el => el.play());
+            isPlaying = true;
+            document.querySelector('.transport-btn').textContent = '⏸';
+            startProgressLoop();
+        }
+
+        function pauseAudio() {
+            Object.values(audioElements).forEach(el => el.pause());
+            isPlaying = false;
+            document.querySelector('.transport-btn').textContent = '▶';
+            cancelAnimationFrame(animationFrame);
+        }
+
+        function stopAudio() {
+            Object.values(audioElements).forEach(el => {
+                el.pause();
+                el.currentTime = 0;
+            });
+            isPlaying = false;
+            if (document.querySelector('.transport-btn'))
+                document.querySelector('.transport-btn').textContent = '▶';
+            updateProgressUI(0);
+            cancelAnimationFrame(animationFrame);
+        }
+
+        function seek(event) {
+            if (duration === 0) return;
+            const rect = event.target.closest('.progress-container').getBoundingClientRect();
+            const pos = (event.clientX - rect.left) / rect.width;
+            const time = pos * duration;
+
+            Object.values(audioElements).forEach(el => {
+                el.currentTime = time;
+            });
+            updateProgressUI(time);
+        }
+
+        function toggleMute(type) {
+            const el = audioElements[type];
+            if (!el) return;
+
+            el.muted = !el.muted;
+            const btn = document.getElementById(`mute-${type}`);
+            if (el.muted) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
+
+        function setVolume(type, val) {
+            const el = audioElements[type];
+            if (el) el.volume = val;
+        }
+
+        function startProgressLoop() {
+            function loop() {
+                // Use voice track as master time reference if available, else first available
+                const master = audioElements['voice'] || Object.values(audioElements)[0];
+                if (master) {
+                    updateProgressUI(master.currentTime);
+                }
+                if (isPlaying) {
+                    animationFrame = requestAnimationFrame(loop);
+                }
+            }
+            loop();
+        }
+
+        function updateProgressUI(time) {
+            const pct = (time / duration) * 100;
+            const bar = document.getElementById('progress-bar');
+            const timeDisplay = document.getElementById('current-time');
+
+            if (bar) bar.style.width = `${pct}%`;
+            if (timeDisplay) timeDisplay.textContent = formatTime(time);
+        }
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        // Start
+        loadStories();
+    </script>
+</body>
+
+</html>

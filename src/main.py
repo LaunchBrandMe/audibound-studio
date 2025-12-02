@@ -1,10 +1,14 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse, StreamingResponse, Response
 from pydantic import BaseModel
 from typing import Optional, Dict, List
 from datetime import datetime
 import os
 import uuid
 import json
+import base64
+import re
+import io
 
 from src.core.director import ScriptDirector
 from src.core.abml import SeriesBible, ScriptManifest, Scene
@@ -16,7 +20,6 @@ from src.worker import task_direct_script, task_produce_audio, get_project_from_
 from src.worker import persist_voice_overrides
 from src.core.voice_library import get_voice_library
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 from datetime import datetime
 import time
 from fastapi import UploadFile, File, Form
@@ -45,6 +48,7 @@ class ValidationSummary(BaseModel):
     score: int
     issues: List[str] = []
     warnings: List[str] = []
+    clarifications: List[Dict] = []
     timestamp: Optional[str] = None
 
 
@@ -61,6 +65,8 @@ class RenderHistoryEntry(BaseModel):
     timestamp: str
     engine: str
     output_path: Optional[str] = None
+    layers: Optional[List[str]] = None
+    notes: Optional[List[str]] = None
 
 
 class ProjectResponse(BaseModel):
@@ -78,8 +84,26 @@ class ProjectResponse(BaseModel):
     validation_summary: Optional[ValidationSummary] = None
 
 
+class SesamePlaygroundRequest(BaseModel):
+    text: str
+    voice_id: Optional[str] = None
+
+
+def _split_text_into_chunks(text: str) -> List[str]:
+    if not text:
+        return []
+    sentences = re.split(r"(?<=[.!?])\s+", text)
+    chunks = [s.strip() for s in sentences if s.strip()]
+    if not chunks:
+        return [text]
+    return chunks
+
 class ProduceAudioRequest(BaseModel):
     engine: str = "kokoro"
+    include_voice: bool = True
+    include_sfx: bool = True
+    include_music: bool = True
+    reuse_voice_cache: bool = True
 
 
 class OverridesRequest(BaseModel):
@@ -190,10 +214,33 @@ async def produce_audio(project_id: str, request: ProduceAudioRequest | None = N
     allowed_engines = {"kokoro", "kokoro_single", "kokoro_multi", "styletts2", "indextts2", "sesame", "mock"}
     if engine not in allowed_engines:
         raise HTTPException(status_code=400, detail=f"Unsupported engine '{engine}'")
+    
+    include_voice = True if request is None else bool(request.include_voice)
+    include_sfx = True if request is None else bool(request.include_sfx)
+    include_music = True if request is None else bool(request.include_music)
+    reuse_voice_cache = True if request is None else bool(request.reuse_voice_cache)
+
+    # Update status to queued immediately to prevent UI race condition
+    update_project_in_db(project_id, {"status": "queued"})
 
     # Dispatch to Celery
-    task_produce_audio.delay(project_id, engine)
-    return {"message": "Production queued", "project_id": project_id, "engine": engine}
+    task_produce_audio.delay(
+        project_id,
+        engine,
+        include_voice=include_voice,
+        include_sfx=include_sfx,
+        include_music=include_music,
+        reuse_voice_cache=reuse_voice_cache,
+    )
+    return {
+        "message": "Production queued",
+        "project_id": project_id,
+        "engine": engine,
+        "include_voice": include_voice,
+        "include_sfx": include_sfx,
+        "include_music": include_music,
+        "reuse_voice_cache": reuse_voice_cache,
+    }
 
 
 @app.post("/projects/{project_id}/overrides")
@@ -398,3 +445,450 @@ async def test_voice_endpoint(voice_id: str, request: Dict):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/voices/{voice_id}/stream")
+async def stream_voice_chunks(voice_id: str, request: Dict):
+    text = (request or {}).get("text", "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Text is required")
+
+    voice_lib = get_voice_library()
+    voice = voice_lib.get_voice(voice_id)
+    if not voice:
+        raise HTTPException(status_code=404, detail="Voice not found")
+
+    engine = voice.get("engine", "styletts2")
+    modal_url = os.getenv(f"{engine.upper()}_MODAL_URL")
+    if engine in {"kokoro", "styletts2", "indextts2", "sesame"} and not modal_url:
+        raise HTTPException(status_code=500, detail=f"Modal URL not configured for {engine}")
+
+    provider = get_voice_provider(engine, modal_url=modal_url)
+    reference_path = voice.get("reference_file")
+
+    chunks = _split_text_into_chunks(text)
+    if not chunks:
+        raise HTTPException(status_code=400, detail="Unable to split text into chunks")
+
+    async def event_generator():
+        for idx, chunk in enumerate(chunks):
+            try:
+                audio_bytes = await provider.generate_audio(
+                    text=chunk,
+                    voice_id="default",
+                    style=None,
+                    reference_audio_path=reference_path
+                )
+                encoded = base64.b64encode(audio_bytes).decode('ascii')
+                payload = {
+                    "index": idx,
+                    "text": chunk,
+                    "audio": encoded,
+                    "mime": "audio/wav"
+                }
+                yield f"event: chunk\ndata: {json.dumps(payload)}\n\n"
+            except Exception as exc:
+                error_payload = {"index": idx, "error": str(exc)}
+                yield f"event: error\ndata: {json.dumps(error_payload)}\n\n"
+                break
+        yield "event: done\ndata: {}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+
+@app.get("/playground/sesame")
+async def sesame_playground_page():
+    return FileResponse("src/static/sesame_playground.html")
+
+
+@app.post("/playground/sesame/generate")
+async def sesame_playground_generate(request: SesamePlaygroundRequest):
+    text = request.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Text is required")
+
+    reference_path = None
+    if request.voice_id:
+        voice = get_voice_library().get_voice(request.voice_id)
+        if not voice:
+            raise HTTPException(status_code=404, detail="Voice not found")
+        reference_path = voice.get("reference_file")
+
+    modal_url = os.getenv("SESAME_MODAL_URL")
+    if not modal_url:
+        raise HTTPException(status_code=500, detail="SESAME_MODAL_URL not configured")
+
+    provider = get_voice_provider("sesame", modal_url=modal_url)
+
+    try:
+        audio_bytes = await provider.generate_audio(
+            text=text,
+            voice_id="default",
+            style=None,
+            reference_audio_path=reference_path
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    return StreamingResponse(
+        io.BytesIO(audio_bytes),
+        media_type="audio/wav",
+        headers={"Content-Disposition": "attachment; filename=sesame_playground.wav"}
+    )
+
+
+@app.get("/playground/dia")
+async def dia_playground_page():
+    return FileResponse("src/static/dia_playground.html")
+
+
+@app.post("/playground/dia/generate")
+async def dia_playground_generate(request: SesamePlaygroundRequest):
+    text = request.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Text is required")
+
+    reference_path = None
+    if request.voice_id:
+        voice = get_voice_library().get_voice(request.voice_id)
+        if not voice:
+            raise HTTPException(status_code=404, detail="Voice not found")
+        reference_path = voice.get("reference_file")
+
+    modal_url = os.getenv("DIA_MODAL_URL")
+    if not modal_url:
+        raise HTTPException(status_code=500, detail="DIA_MODAL_URL not configured")
+
+    provider = get_voice_provider("dia", modal_url=modal_url)
+
+    try:
+        audio_bytes = await provider.generate_audio(
+            text=text,
+            voice_id="default",
+            reference_audio_path=reference_path
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    return StreamingResponse(
+        io.BytesIO(audio_bytes),
+        media_type="audio/wav",
+        headers={"Content-Disposition": "attachment; filename=dia_playground.wav"}
+    )
+
+
+# --- SFX & Music Playground ---
+
+class SfxPlaygroundRequest(BaseModel):
+    description: str
+    duration: float = 5.0
+
+class MusicPlaygroundRequest(BaseModel):
+    style_description: str
+    duration: float = 10.0
+
+@app.get("/playground/sfx")
+async def sfx_playground_page():
+    return FileResponse("src/static/sfx_playground.html")
+
+@app.post("/playground/sfx/generate")
+async def sfx_playground_generate(request: SfxPlaygroundRequest):
+    from src.core.sfx_engine import get_sfx_provider
+    
+    description = request.description.strip()
+    if not description:
+        raise HTTPException(status_code=400, detail="Description is required")
+
+    # Use AudioGen provider
+    try:
+        provider = get_sfx_provider("audiogen", duration=request.duration)
+        file_path = await provider.get_sfx(description, "playground")
+        
+        # Save to permanent location for history
+        history_dir = os.path.join("outputs", "playground_history", "sfx")
+        os.makedirs(history_dir, exist_ok=True)
+        timestamp = int(time.time())
+        filename = f"sfx_{timestamp}.wav"
+        permanent_path = os.path.join(history_dir, filename)
+        
+        with open(file_path, "rb") as f:
+            audio_bytes = f.read()
+        
+        with open(permanent_path, "wb") as f:
+            f.write(audio_bytes)
+            
+        # Clean up temp file
+        os.unlink(file_path)
+        
+        # Save to history JSON
+        _save_playground_history("sfx", {
+            "description": description,
+            "duration": request.duration,
+            "timestamp": datetime.now().isoformat(),
+            "file_path": f"/outputs/playground_history/sfx/{filename}"
+        })
+        
+        return Response(
+            content=audio_bytes,
+            media_type="audio/wav",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    except Exception as exc:
+        print(f"SFX Error: {exc}")
+        raise HTTPException(status_code=500, detail=str(exc))
+
+@app.post("/playground/music/generate")
+async def music_playground_generate(request: MusicPlaygroundRequest):
+    from src.core.music_engine import get_music_provider
+    
+    description = request.style_description.strip()
+    if not description:
+        raise HTTPException(status_code=400, detail="Style description is required")
+
+    # Use MusicGen provider
+    try:
+        provider = get_music_provider("musicgen")
+        file_path = await provider.get_music(description, request.duration)
+        
+        # Save to permanent location for history
+        history_dir = os.path.join("outputs", "playground_history", "music")
+        os.makedirs(history_dir, exist_ok=True)
+        timestamp = int(time.time())
+        filename = f"music_{timestamp}.wav"
+        permanent_path = os.path.join(history_dir, filename)
+        
+        with open(file_path, "rb") as f:
+            audio_bytes = f.read()
+        
+        with open(permanent_path, "wb") as f:
+            f.write(audio_bytes)
+            
+        # Clean up temp file
+        os.unlink(file_path)
+        
+        # Save to history JSON
+        _save_playground_history("music", {
+            "description": description,
+            "duration": request.duration,
+            "timestamp": datetime.now().isoformat(),
+            "file_path": f"/outputs/playground_history/music/{filename}"
+        })
+        
+        return Response(
+            content=audio_bytes,
+            media_type="audio/wav",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    except Exception as exc:
+        print(f"Music Error: {exc}")
+        raise HTTPException(status_code=500, detail=str(exc))
+
+def _save_playground_history(category: str, entry: dict):
+    """Save playground generation to history JSON file."""
+    history_file = os.path.join("outputs", "playground_history", f"{category}_history.json")
+    history = []
+    if os.path.exists(history_file):
+        try:
+            with open(history_file, "r") as f:
+                history = json.load(f)
+        except Exception as e:
+            print(f"Error reading history: {e}")
+    
+    history.insert(0, entry)
+    history = history[:50]  # Keep last 50
+    
+    try:
+        with open(history_file, "w") as f:
+            json.dump(history, f, indent=2)
+    except Exception as e:
+        print(f"Error saving history: {e}")
+
+@app.get("/playground/history/{category}")
+async def get_playground_history(category: str):
+    """Get playground history for SFX or Music."""
+    if category not in ["sfx", "music"]:
+        raise HTTPException(status_code=400, detail="Invalid category")
+    
+    history_file = os.path.join("outputs", "playground_history", f"{category}_history.json")
+    if not os.path.exists(history_file):
+        return {"history": []}
+    
+    try:
+        with open(history_file, "r") as f:
+            history = json.load(f)
+        return {"history": history[:10]}  # Return last 10
+    except Exception as e:
+        print(f"Error reading history: {e}")
+        return {"history": []}
+
+
+# --- Outputs listing for UI ---
+
+def _list_outputs_from_disk(limit: int = 50):
+    """Scan outputs directory for .m4b files and return recent ones."""
+    results = []
+    for root, dirs, files in os.walk("outputs"):
+        for fname in files:
+            if not fname.lower().endswith(".m4b"):
+                continue
+            fpath = os.path.join(root, fname)
+            try:
+                stat = os.stat(fpath)
+                results.append({
+                    "name": fname,
+                    "path": fpath,
+                    "url": "/" + os.path.relpath(fpath, "."),
+                    "modified": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                    "size_kb": int(stat.st_size / 1024)
+                })
+            except FileNotFoundError:
+                continue
+    results.sort(key=lambda x: x["modified"], reverse=True)
+    return results[:limit]
+
+
+def _list_tracks_grouped(limit: int = 200):
+    """Return grouped tracks for multitrack player."""
+    produced = []
+    playground_sfx = []
+    playground_music = []
+    voice_tests = []
+
+    for root, dirs, files in os.walk("outputs"):
+        # Skip cache/temp
+        parts = root.split(os.sep)
+        if "cache" in parts or "temp" in parts:
+            continue
+        for fname in files:
+            lower = fname.lower()
+            fpath = os.path.join(root, fname)
+            rel = os.path.relpath(fpath, ".")
+            url = "/" + rel
+            try:
+                stat = os.stat(fpath)
+                meta = {
+                    "name": fname,
+                    "path": fpath,
+                    "url": url,
+                    "modified": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                    "size_kb": int(stat.st_size / 1024)
+                }
+            except FileNotFoundError:
+                continue
+
+            if lower.endswith(".m4b"):
+                # exclude playground and tests
+                if "playground_history" in parts:
+                    continue
+                if "voice_tests" in parts:
+                    continue
+                produced.append(meta)
+            elif lower.endswith(".wav"):
+                if "playground_history" in parts and "sfx" in parts:
+                    playground_sfx.append(meta)
+                elif "playground_history" in parts and "music" in parts:
+                    playground_music.append(meta)
+                elif "voice_tests" in parts:
+                    voice_tests.append(meta)
+
+    produced.sort(key=lambda x: x["modified"], reverse=True)
+    playground_sfx.sort(key=lambda x: x["modified"], reverse=True)
+    playground_music.sort(key=lambda x: x["modified"], reverse=True)
+    voice_tests.sort(key=lambda x: x["modified"], reverse=True)
+
+    return {
+        "produced": produced[:limit],
+        "playground_sfx": playground_sfx[:limit],
+        "playground_music": playground_music[:limit],
+        "voice_tests": voice_tests[:limit],
+    }
+
+@app.get("/outputs/tracks")
+async def list_tracks():
+    return _list_tracks_grouped()
+
+@app.get("/stories")
+async def list_stories():
+    """
+    List 'Stories' found in outputs directory.
+    Shows ALL audio files in each project folder.
+    """
+    stories = []
+    outputs_dir = "outputs"
+    
+    if not os.path.exists(outputs_dir):
+        return {"stories": []}
+
+    for project_id in os.listdir(outputs_dir):
+        project_path = os.path.join(outputs_dir, project_id)
+        if not os.path.isdir(project_path) or project_id in ["cache", "playground_history", "voice_tests", "voice_cloning_tests"]:
+            continue
+            
+        # Collect ALL audio files (mp3, wav, m4b)
+        audio_files = {}
+        for file in os.listdir(project_path):
+            if file.lower().endswith(('.mp3', '.wav', '.m4b')):
+                file_path = os.path.join(project_path, file)
+                file_url = f"/outputs/{project_id}/{file}"
+                
+                # Categorize by filename
+                if 'narration' in file.lower() or 'voice' in file.lower():
+                    audio_files.setdefault('voice', []).append({"name": file, "url": file_url})
+                elif 'music' in file.lower():
+                    audio_files.setdefault('music', []).append({"name": file, "url": file_url})
+                elif 'sfx' in file.lower():
+                    audio_files.setdefault('sfx', []).append({"name": file, "url": file_url})
+                elif file.lower().endswith('.m4b'):
+                    audio_files.setdefault('mix', []).append({"name": file, "url": file_url})
+                else:
+                    # Uncategorized audio
+                    audio_files.setdefault('other', []).append({"name": file, "url": file_url})
+        
+        if not audio_files:
+            continue
+            
+        # Get metadata
+        title = project_id # Default
+        timestamp = os.path.getmtime(project_path)
+        
+        # Try to read abml.json for title
+        abml_path = os.path.join(project_path, "abml.json")
+        if os.path.exists(abml_path):
+            try:
+                with open(abml_path, 'r') as f:
+                    data = json.load(f)
+                    title = data.get("title", title)
+            except:
+                pass
+        elif audio_files.get('mix'):
+            # Try to use filename as title
+            title = os.path.splitext(audio_files['mix'][0]['name'])[0].split("__")[0].replace("_", " ")
+
+        stories.append({
+            "id": project_id,
+            "title": title,
+            "timestamp": datetime.fromtimestamp(timestamp).isoformat(),
+            "audio_files": audio_files
+        })
+    
+    # Sort by newest
+    stories.sort(key=lambda x: x["timestamp"], reverse=True)
+    return {"stories": stories}
+
+
+@app.get("/outputs/list")
+async def list_outputs(limit: int = 50):
+    try:
+        limit = max(1, min(int(limit), 200))
+    except Exception:
+        limit = 50
+    return {"outputs": _list_outputs_from_disk(limit)}
+
+
+@app.get("/outputs/tracks")
+async def list_tracks(limit: int = 200):
+    try:
+        limit = max(1, min(int(limit), 500))
+    except Exception:
+        limit = 200
+    return _list_tracks_grouped(limit)

@@ -42,7 +42,7 @@ class SesameProvider:
             payload["voice_sample_bytes"] = base64.b64encode(audio_bytes).decode()
             print(f"[SesameProvider] Reference audio encoded ({len(audio_bytes)} bytes)")
         
-        async with httpx.AsyncClient(timeout=120.0) as client:
+        async with httpx.AsyncClient(timeout=300.0, follow_redirects=True) as client:
             response = await client.post(self.modal_url, json=payload)
             response.raise_for_status()
             content = response.content

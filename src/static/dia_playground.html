@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dia Playground</title>
+    <style>
+        body {
+            font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            background: radial-gradient(circle at top, rgba(244,114,182,0.2), #050816 65%);
+            color: #e0e7ff;
+            padding: 40px 20px 80px;
+        }
+        .shell { max-width: 900px; margin: 0 auto; }
+        .card {
+            background: rgba(15,23,42,0.9);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid rgba(96,165,250,0.2);
+            box-shadow: 0 20px 50px rgba(2,6,23,0.6);
+            margin-bottom: 24px;
+        }
+        textarea, select, input {
+            width: 100%;
+            font: inherit;
+            border-radius: 12px;
+            border: 1px solid rgba(148,163,184,0.3);
+            background: rgba(2,6,23,0.6);
+            color: #e0e7ff;
+            padding: 14px;
+            box-sizing: border-box;
+            margin-bottom: 12px;
+        }
+        button {
+            font: inherit;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.2s ease;
+        }
+        .primary { background: linear-gradient(135deg,#ec4899,#8b5cf6); color: white; box-shadow: 0 10px 25px rgba(236,72,153,0.4); }
+        .secondary { background: rgba(148,163,184,0.2); color: #e0e7ff; }
+        .toolbar { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:12px; }
+        .toolbar button { flex: 1 1 130px; font-size: 0.9rem; }
+        .status { min-height: 24px; color: #93c5fd; }
+        audio { width: 100%; margin-top: 10px; }
+        a { color: #93c5fd; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <h1>Dia Playground</h1>
+        <p>Dia supports multi-speaker scripts using tokens like [S1], [S2], and inline directions such as (laughs) or (whispers). Use this playground to preview lines before feeding them into the production pipeline.</p>
+
+        <div class="card">
+            <label style="text-transform:uppercase; font-size:0.8rem; letter-spacing:0.08em; color:#94a3b8;">Optional Reference Voice</label>
+            <select id="voice-select">
+                <option value="">Use Dia base voice</option>
+            </select>
+            <button class="secondary" onclick="refreshVoices()">Refresh Voices</button>
+        </div>
+
+        <div class="card">
+            <div class="toolbar">
+                <button class="secondary" onclick="insertToken('[S1]')">Speaker 1</button>
+                <button class="secondary" onclick="insertToken('[S2]')">Speaker 2</button>
+                <button class="secondary" onclick="insertToken('(laughs)')">(laughs)</button>
+                <button class="secondary" onclick="insertToken('(whispers)')">(whispers)</button>
+                <button class="secondary" onclick="insertToken('(gasps)')">(gasps)</button>
+                <button class="secondary" onclick="insertToken('(coughs)')">(coughs)</button>
+            </div>
+            <textarea id="prompt" rows="8">[S1] Welcome to the Dia playground. (laughs) Today we test expressive cues. [S2] Sounds good—let's whisper the rest. (whispers) This is our secret.</textarea>
+            <div style="display:flex; gap:12px;">
+                <button class="primary" style="flex:1;" onclick="generateAudio()">Generate</button>
+                <button class="secondary" style="flex-basis:160px;" onclick="stopPlayback()">Stop</button>
+            </div>
+            <div id="status" class="status"></div>
+            <audio id="preview" controls></audio>
+        </div>
+
+        <p style="text-align:center; font-size:0.85rem;">Return to the <a href="/static/voices.html">Cloning Lab</a></p>
+    </div>
+
+    <script>
+        const API_URL = '';
+        const voiceSelect = document.getElementById('voice-select');
+        const promptBox = document.getElementById('prompt');
+        const statusBox = document.getElementById('status');
+        const audioEl = document.getElementById('preview');
+        let currentAbort = null;
+
+        async function refreshVoices() {
+            try {
+                const res = await fetch(`${API_URL}/voices`);
+                const data = await res.json();
+                const voices = data.voices || [];
+                voiceSelect.innerHTML = '<option value="">Use Dia base voice</option>';
+                voices.filter(v => (v.engine || '').toLowerCase() === 'dia')
+                    .forEach(v => {
+                        const opt = document.createElement('option');
+                        opt.value = v.id;
+                        opt.textContent = v.name || v.id;
+                        voiceSelect.appendChild(opt);
+                    });
+            } catch (err) {
+                console.error(err);
+                statusBox.textContent = 'Failed to load voices.';
+            }
+        }
+
+        function insertToken(token) {
+            const start = promptBox.selectionStart;
+            const end = promptBox.selectionEnd;
+            const val = promptBox.value;
+            promptBox.value = val.slice(0, start) + token + val.slice(end);
+            promptBox.focus();
+            promptBox.selectionStart = promptBox.selectionEnd = start + token.length;
+        }
+
+        function stopPlayback() {
+            if (currentAbort) {
+                currentAbort.abort();
+                currentAbort = null;
+            }
+            audioEl.pause();
+            audioEl.currentTime = 0;
+            statusBox.textContent = 'Playback stopped.';
+        }
+
+        async function generateAudio() {
+            const text = promptBox.value.trim();
+            if (!text) {
+                alert('Enter some text.');
+                return;
+            }
+            stopPlayback();
+            statusBox.textContent = 'Generating...';
+            const controller = new AbortController();
+            currentAbort = controller;
+            try {
+                const response = await fetch(`${API_URL}/playground/dia/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, voice_id: voiceSelect.value || null }),
+                    signal: controller.signal
+                });
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    throw new Error(err.detail || 'Failed to generate audio');
+                }
+                const blob = await response.blob();
+                audioEl.src = URL.createObjectURL(blob);
+                audioEl.play();
+                statusBox.textContent = 'Preview ready.';
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    statusBox.textContent = 'Request canceled.';
+                } else {
+                    statusBox.textContent = `Error: ${err.message}`;
+                }
+            } finally {
+                currentAbort = null;
+            }
+        }
+
+        refreshVoices();
+    </script>
+</body>
+</html>

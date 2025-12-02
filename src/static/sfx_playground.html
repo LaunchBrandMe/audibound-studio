@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Studio Playground · SFX & Music</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        .history-sidebar {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 20px;
+        }
+
+        .history-item {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .history-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .history-item button {
+            margin-top: 6px;
+            padding: 4px 10px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+
+<body class="voice-page">
+    <div class="page-shell">
+        <header class="page-hero">
+            <div>
+                <p class="muted" style="margin:0; letter-spacing:0.08em; text-transform:uppercase; font-size:0.8rem;">
+                    Playground</p>
+                <h1>🔊 Studio Playground</h1>
+                <p>Create ambient SFX beds and quick musical sketches without leaving the browser.</p>
+            </div>
+            <nav style="display:flex; gap:12px; flex-wrap:wrap;">
+                <a href="/">← Back to Projects</a>
+                <a href="/static/voices.html" style="color:#93c5fd;">Cloning Lab ↗</a>
+            </nav>
+        </header>
+
+        <section class="playground-grid">
+            <div class="card">
+                <h2 style="margin-top:0;">Sound Effects · AudioGen</h2>
+                <p class="muted" style="margin-top:4px;">Describe a soundscape and AudioGen will paint it for you.</p>
+                <label for="sfx-prompt" class="muted">Prompt</label>
+                <textarea id="sfx-prompt" rows="4"
+                    placeholder="e.g., heavy rain on a tin roof, footsteps on gravel, distant thunder"></textarea>
+
+                <div class="range-field">
+                    <label>Duration <span id="sfx-duration-val">5.0s</span></label>
+                    <input type="range" id="sfx-duration" min="1" max="60" step="0.5" value="5.0"
+                        oninput="document.getElementById('sfx-duration-val').textContent = this.value + 's'">
+                </div>
+
+                <button class="primary-btn" style="margin-top:16px;" onclick="generateSFX()" id="sfx-btn">Generate
+                    SFX</button>
+                <div id="sfx-status" class="status-line"></div>
+                <audio id="sfx-player" controls style="display:none; margin-top:10px;"></audio>
+
+                <div class="history-sidebar">
+                    <h4 style="margin-top:0;">Recent SFX</h4>
+                    <div id="sfx-history"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 style="margin-top:0;">Music Cues · MusicGen</h2>
+                <p class="muted" style="margin-top:4px;">Sketch a vibe or instrumentation and MusicGen fills the gaps.
+                </p>
+                <label for="music-prompt" class="muted">Prompt</label>
+                <textarea id="music-prompt" rows="4"
+                    placeholder="e.g., lofi hip-hop beat, cinematic strings build, 8-bit adventure loop"></textarea>
+
+                <div class="range-field">
+                    <label>Duration <span id="music-duration-val">30s</span></label>
+                    <input type="range" id="music-duration" min="1" max="300" step="1" value="30"
+                        oninput="document.getElementById('music-duration-val').textContent = this.value + 's'">
+                </div>
+
+                <button class="primary-btn" style="margin-top:16px;" onclick="generateMusic()" id="music-btn">Generate
+                    Music</button>
+                <div id="music-status" class="status-line"></div>
+                <audio id="music-player" controls style="display:none; margin-top:10px;"></audio>
+
+                <div class="history-sidebar">
+                    <h4 style="margin-top:0;">Recent Music</h4>
+                    <div id="music-history"></div>
+                </div>
+            </div>
+        </section>
+
+        <p style="text-align:center; margin-top:40px; font-size:0.85rem;"><a href="/">Return Home</a></p>
+    </div>
+
+    <script>
+        async function loadHistory(category) {
+            try {
+                const res = await fetch(`/playground/history/${category}`);
+                const data = await res.json();
+                const container = document.getElementById(`${category}-history`);
+                if (!data.history || data.history.length === 0) {
+                    container.innerHTML = '<p class="muted" style="font-size:0.85rem;">No history yet.</p>';
+                    return;
+                }
+                container.innerHTML = data.history.map(item => `
+                    <div class="history-item">
+                        <div class="muted" style="font-size:0.75rem;">${new Date(item.timestamp).toLocaleString()}</div>
+                        <div style="margin:4px 0;">${item.description}</div>
+                        <div class="muted" style="font-size:0.75rem;">${item.duration}s</div>
+                        <button onclick="playHistoryItem('${item.file_path}')">▶ Play</button>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error('Failed to load history:', err);
+            }
+        }
+
+        function playHistoryItem(filePath) {
+            let player = document.getElementById('history-audio-player');
+            if (!player) {
+                player = document.createElement('audio');
+                player.id = 'history-audio-player';
+                player.controls = true;
+                player.style.cssText = 'position:fixed; bottom:20px; right:20px; z-index:1000; border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,0.3);';
+                document.body.appendChild(player);
+            }
+            player.src = filePath;
+            player.play();
+        }
+
+        async function generateSFX() {
+            const prompt = document.getElementById('sfx-prompt').value.trim();
+            const duration = parseFloat(document.getElementById('sfx-duration').value);
+            const btn = document.getElementById('sfx-btn');
+            const status = document.getElementById('sfx-status');
+            const player = document.getElementById('sfx-player');
+            if (!prompt) { alert('Enter a description first'); return; }
+            btn.disabled = true;
+            status.textContent = 'Generating…';
+            player.style.display = 'none';
+            try {
+                const res = await fetch('/playground/sfx/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ description: prompt, duration })
+                });
+                if (!res.ok) throw new Error((await res.json()).detail || 'Failed to generate');
+                const blob = await res.blob();
+                player.src = URL.createObjectURL(blob);
+                player.style.display = 'block';
+                player.play();
+                status.textContent = 'Ready.';
+                loadHistory('sfx');  // Refresh history
+            } catch (err) {
+                status.textContent = `Error: ${err.message}`;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function generateMusic() {
+            const prompt = document.getElementById('music-prompt').value.trim();
+            const duration = parseFloat(document.getElementById('music-duration').value);
+            const btn = document.getElementById('music-btn');
+            const status = document.getElementById('music-status');
+            const player = document.getElementById('music-player');
+            if (!prompt) { alert('Enter a style description'); return; }
+            btn.disabled = true;
+            status.textContent = 'Generating…';
+            player.style.display = 'none';
+            try {
+                const res = await fetch('/playground/music/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ style_description: prompt, duration })
+                });
+                if (!res.ok) throw new Error((await res.json()).detail || 'Failed to generate');
+                const blob = await res.blob();
+                player.src = URL.createObjectURL(blob);
+                player.style.display = 'block';
+                player.play();
+                status.textContent = 'Ready.';
+                loadHistory('music');  // Refresh history
+            } catch (err) {
+                status.textContent = `Error: ${err.message}`;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // Load history on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadHistory('sfx');
+            loadHistory('music');
+        });
+    </script>
+</body>
+
+</html>
