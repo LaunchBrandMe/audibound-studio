@@ -27,6 +27,36 @@ body.voice-page {
   color: var(--text);
 }
 
+.playground-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.status-line {
+  font-size: 0.9rem;
+  color: var(--muted);
+  min-height: 22px;
+  margin-top: 10px;
+}
+
+.range-field {
+  margin-top: 10px;
+}
+
+.range-field label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.range-field input[type="range"] {
+  width: 100%;
+  margin-top: 6px;
+}
+
 .page-shell {
   max-width: 1100px;
   margin: 0 auto;
@@ -281,6 +311,18 @@ textarea,
   position: fixed;
   bottom: 24px;
   right: 24px;
+  width: min(360px, 90vw);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: var(--shadow);
+  display: none;
+}
+
+#edit-panel {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
   width: min(360px, 90vw);
   border-radius: 16px;
   border: 1px solid var(--border);

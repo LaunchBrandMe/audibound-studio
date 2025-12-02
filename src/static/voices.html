@@ -17,8 +17,10 @@
                 <h1>🧪 Cloning Lab</h1>
                 <p>Upload and curate expressive reference voices for cloning.</p>
             </div>
-            <nav>
+            <nav style="display:flex; gap:12px; flex-wrap:wrap;">
                 <a href="/">← Back to Projects</a>
+                <a href="/playground/sesame" style="color:#93c5fd;">Sesame Playground ↗</a>
+                <a href="/playground/dia" style="color:#f9a8d4;">Dia Playground ↗</a>
             </nav>
         </header>
 
@@ -45,7 +47,8 @@
                     <select id="voice-engine">
                         <option value="styletts2">StyleTTS2</option>
                         <option value="sesame">Sesame CSM</option>
-                        <option value="indextts2">IndexTTS2 (Experimental)</option>
+                        <option value="indextts2">IndexTTS2</option>
+                        <option value="dia">Dia 1.6B</option>
                     </select>
                 </div>
                 <div style="display:flex; align-items:flex-end;">
@@ -75,7 +78,10 @@
             </div>
             <div id="test-voice-info" class="muted" style="font-size:0.9rem;"></div>
             <textarea id="test-text">This is a test of the voice cloning system.</textarea>
-            <button class="primary-btn" onclick="generateTest()">🔊 Generate Test Audio</button>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button class="primary-btn" style="flex:1;" onclick="generateTest()">🔊 Generate Test Audio</button>
+                <button class="secondary-btn" style="flex:1;" onclick="streamTestVoice()">⚡ Stream Preview</button>
+            </div>
             <div id="test-result" class="muted"></div>
 
             <div class="samples-list" style="margin-top:20px; border-top:1px solid var(--border); padding-top:16px;">
@@ -85,16 +91,77 @@
         </div>
     </section>
 
+    <section id="edit-panel" style="display:none;">
+        <div class="test-panel__inner">
+            <div class="test-panel__header">
+                <h3>Edit Voice</h3>
+                <button class="test-panel__close" onclick="closeEditPanel()">×</button>
+            </div>
+            <input type="text" id="edit-name" placeholder="Voice name" />
+            <input type="text" id="edit-tags" placeholder="Tags (comma separated)" />
+            <select id="edit-engine">
+                <option value="styletts2">StyleTTS2</option>
+                <option value="sesame">Sesame CSM</option>
+                <option value="indextts2">IndexTTS2</option>
+                <option value="dia">Dia 1.6B</option>
+            </select>
+            <button class="primary-btn" onclick="saveEditVoice()">💾 Save Changes</button>
+            <div id="edit-result" class="muted"></div>
+        </div>
+    </section>
+
     <script>
         const API_URL = '';
         let selectedFile = null;
         let currentTestVoice = null;
         let voices = [];
+        let currentEditVoice = null;
+        let audioContext = null;
+        let chunkQueue = [];
+        let isChunkPlaying = false;
+        let currentStreamAbort = null;
+        let currentSource = null;
 
         const uploadArea = document.getElementById('upload-area');
         const uploadForm = document.getElementById('upload-form');
         const fileInput = document.getElementById('file-input');
         const uploadStatus = document.getElementById('upload-status');
+        const testTextarea = document.getElementById('test-text');
+        testTextarea.addEventListener('input', () => {
+            testTextarea.dataset.manual = 'true';
+        });
+        const SAMPLE_TEMPLATES = [
+            "Hello, I'm {{name}}. I'm ready to bring your scripts to life.",
+            "Hi there, {{name}} speaking. Let's create something unforgettable.",
+            "This is {{name}}. I can guide your listeners through every twist and turn.",
+            "Greetings! {{name}} here, your companion for dramatic storytelling.",
+            "I’m {{name}}. Think of me as the narrator who never gets tired.",
+            "Hello from {{name}}. I'm warmed up and ready for your dialogue.",
+            "Hey! {{name}} checking in. Give me a script and I'll give you emotion.",
+            "My name is {{name}}. I can whisper secrets or shout triumphant victories.",
+            "{{name}} reporting for duty. Let's turn text into cinema for the ears.",
+            "Hi, {{name}} here. Want calm narration or bold drama? Just say the word.",
+            "Hello, this is {{name}}. I'll keep your audience leaning forward.",
+            "I'm {{name}}—part confidant, part storyteller, all voice.",
+            "Warm greetings! {{name}} ready to narrate your next masterpiece.",
+            "This is {{name}}. I can be energetic sunshine or stormy suspense.",
+            "Hey, it's {{name}}. I'm tuned for crystal-clear dialogue.",
+            "{{name}} here. Let me carry your listeners from scene to scene.",
+            "Hello from {{name}}! I'm eager to try on new characters.",
+            "This is {{name}} speaking. Shall we explore a new world together?",
+            "Hi, I'm {{name}}. I'm flexible, expressive, and ready for direction.",
+            "Greetings! {{name}} at your service with a fresh vocal sample.",
+            "I’m {{name}}, fueled up for drama, comedy, and everything between.",
+            "{{name}} here—I can be your calm narrator or your chaotic wildcard.",
+            "Hello! {{name}} warming up the vocal cords for your next scene.",
+            "This is {{name}} with a voice primed for heroes and villains alike.",
+            "Hey, {{name}} here. Ready to breathe heart into your dialogue.",
+            "Greetings from {{name}}. Let’s make your audience lean closer.",
+            "Hi! {{name}} on deck. Just point me at a script and hit record.",
+            "My name is {{name}}—consider me your vocal Swiss Army knife.",
+            "Hello, {{name}} on standby. Shall we tell a story together?",
+            "I’m {{name}}, and I’ve got plenty of range left in the tank."
+        ];
 
         uploadArea.addEventListener('click', () => fileInput.click());
         uploadArea.addEventListener('dragover', (e) => {
@@ -197,6 +264,7 @@
                     ${(voice.tags && voice.tags.length) ? `<div class="tag-list">${voice.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</div>` : ''}
                     <div class="voice-card__actions">
                         <button class="primary-btn" style="flex:1;" onclick="testVoice('${voice.id}')">▶ Test</button>
+                        <button class="secondary-btn" style="flex:0 0 auto; padding:10px 12px;" onclick="openEditPanel('${voice.id}')">✎</button>
                         <button class="danger-btn" style="flex:0 0 auto; padding:10px 16px;" onclick="deleteVoice('${voice.id}')">🗑</button>
                     </div>
                 </article>`;
@@ -220,6 +288,9 @@
             document.getElementById('test-panel').style.display = 'block';
             document.getElementById('test-voice-info').textContent = `${voice.name} · ${voice.engine}`;
             document.getElementById('test-result').textContent = '';
+            if (testTextarea.dataset.manual !== 'true') {
+                testTextarea.value = buildSampleText(voice);
+            }
             loadVoiceSamples(voiceId);
         }
 
@@ -259,6 +330,7 @@
         }
 
         function closeTestPanel() {
+            stopStreaming();
             document.getElementById('test-panel').style.display = 'none';
             currentTestVoice = null;
         }
@@ -312,6 +384,204 @@
                 alert(error.message);
             }
         }
+
+        function base64ToArrayBuffer(base64) {
+            const binary = atob(base64);
+            const len = binary.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        function ensureAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }
+
+        function stopStreaming() {
+            if (currentStreamAbort) {
+                currentStreamAbort.abort();
+                currentStreamAbort = null;
+            }
+            chunkQueue = [];
+            if (currentSource) {
+                currentSource.onended = null;
+                try { currentSource.stop(); } catch (e) {}
+                currentSource.disconnect();
+                currentSource = null;
+            }
+            isChunkPlaying = false;
+        }
+
+        async function streamTestVoice() {
+            if (!currentTestVoice) {
+                alert('Select a voice first.');
+                return;
+            }
+            const text = document.getElementById('test-text').value.trim();
+            if (!text) {
+                alert('Enter some text to stream.');
+                return;
+            }
+            stopStreaming();
+            ensureAudioContext();
+            const resultDiv = document.getElementById('test-result');
+            resultDiv.textContent = 'Streaming...';
+            const controller = new AbortController();
+            currentStreamAbort = controller;
+            try {
+                const response = await fetch(`${API_URL}/voices/${currentTestVoice.id}/stream`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text }),
+                    signal: controller.signal
+                });
+                if (!response.ok || !response.body) {
+                    throw new Error('Unable to start stream');
+                }
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
+                    let boundary;
+                    while ((boundary = buffer.indexOf('\n\n')) !== -1) {
+                        const rawEvent = buffer.slice(0, boundary);
+                        buffer = buffer.slice(boundary + 2);
+                        if (!rawEvent.trim()) continue;
+                        handleStreamEvent(rawEvent);
+                    }
+                }
+                resultDiv.textContent = 'Streaming complete.';
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    resultDiv.textContent = 'Streaming canceled.';
+                } else {
+                    resultDiv.textContent = `Stream error: ${err.message}`;
+                }
+            } finally {
+                currentStreamAbort = null;
+            }
+        }
+
+        function handleStreamEvent(rawEvent) {
+            const lines = rawEvent.split('\n');
+            let eventType = 'message';
+            let dataLines = [];
+            for (const line of lines) {
+                if (line.startsWith('event:')) {
+                    eventType = line.slice(6).trim();
+                } else if (line.startsWith('data:')) {
+                    dataLines.push(line.slice(5));
+                }
+            }
+            const dataStr = dataLines.join('\n');
+            if (eventType === 'chunk') {
+                try {
+                    const payload = JSON.parse(dataStr);
+                    queueAudioChunk(payload);
+                } catch (err) {
+                    console.error('Failed to parse chunk', err);
+                }
+            } else if (eventType === 'error') {
+                console.error('Stream error event', dataStr);
+                document.getElementById('test-result').textContent = 'Stream error.';
+                stopStreaming();
+            } else if (eventType === 'done') {
+                // no-op
+            }
+        }
+
+        async function queueAudioChunk(payload) {
+            if (!payload || !payload.audio) return;
+            chunkQueue.push(payload);
+            if (!isChunkPlaying) {
+                playNextChunk();
+            }
+        }
+
+        async function playNextChunk() {
+            if (!chunkQueue.length) {
+                isChunkPlaying = false;
+                return;
+            }
+            isChunkPlaying = true;
+            const payload = chunkQueue.shift();
+            try {
+                const audioBuffer = await audioContext.decodeAudioData(base64ToArrayBuffer(payload.audio));
+                const source = audioContext.createBufferSource();
+                currentSource = source;
+                source.buffer = audioBuffer;
+                source.connect(audioContext.destination);
+                source.onended = () => {
+                    currentSource = null;
+                    playNextChunk();
+                };
+                source.start();
+            } catch (err) {
+                console.error('Playback error', err);
+                playNextChunk();
+            }
+        }
+
+        function buildSampleText(voice) {
+            const name = voice.name || 'this voice';
+            const template = SAMPLE_TEMPLATES[Math.floor(Math.random() * SAMPLE_TEMPLATES.length)];
+            return template.replace(/{{name}}/g, name);
+        }
+
+        function openEditPanel(voiceId) {
+            const voice = voices.find(v => v.id === voiceId);
+            if (!voice) return;
+            currentEditVoice = voice;
+            document.getElementById('edit-panel').style.display = 'block';
+            document.getElementById('edit-name').value = voice.name || '';
+            document.getElementById('edit-tags').value = (voice.tags || []).join(', ');
+            document.getElementById('edit-engine').value = voice.engine || 'styletts2';
+            document.getElementById('edit-result').textContent = '';
+        }
+
+        function closeEditPanel() {
+            document.getElementById('edit-panel').style.display = 'none';
+            currentEditVoice = null;
+        }
+
+        async function saveEditVoice() {
+            if (!currentEditVoice) return;
+            const payload = {
+                name: document.getElementById('edit-name').value.trim(),
+                tags: document.getElementById('edit-tags').value.split(',').map(t => t.trim()).filter(Boolean),
+                engine: document.getElementById('edit-engine').value
+            };
+            try {
+                const response = await fetch(`${API_URL}/voices/${currentEditVoice.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Failed to update voice');
+                }
+                document.getElementById('edit-result').textContent = 'Saved!';
+                await loadVoices();
+                closeEditPanel();
+            } catch (error) {
+                document.getElementById('edit-result').textContent = `Error: ${error.message}`;
+            }
+        }
+
+        window.openEditPanel = openEditPanel;
+        window.closeEditPanel = closeEditPanel;
+        window.saveEditVoice = saveEditVoice;
 
         loadVoices();
     </script>

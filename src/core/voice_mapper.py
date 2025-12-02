@@ -54,6 +54,12 @@ class VoiceMapper:
         except ImportError:
             pass
 
+        try:
+            from src.core.dia_provider import DiaProvider
+            all_voices.update(DiaProvider.get_available_voices())
+        except ImportError:
+            pass
+
         # Custom voices from library
         try:
             from src.core.voice_library import get_voice_library
@@ -64,7 +70,7 @@ class VoiceMapper:
                 if not custom_id:
                     continue
                 key = f"{engine}:custom_{custom_id}"
-                label = f"{voice.get('name', 'Custom Voice')} (Custom)"
+                label = voice.get('name') or 'Uploaded Voice'
                 all_voices[key] = label
         except ImportError:
             pass

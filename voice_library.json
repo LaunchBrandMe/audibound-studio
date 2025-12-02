@@ -2,7 +2,7 @@
   "voices": [
     {
       "id": "a77dae99-9919-4cc5-9546-b321c2ec02be",
-      "name": "2514-149482-0089",
+      "name": "Brad",
       "engine": "styletts2",
       "reference_file": "references/custom_uploads/a77dae99-9919-4cc5-9546-b321c2ec02be.wav",
       "tags": [
@@ -11,21 +11,6 @@
         "Conversational"
       ],
       "created_at": "2025-11-28T00:14:50.706250Z",
-      "sample_rate": 24000,
-      "duration_seconds": 0,
-      "metadata": {}
-    },
-    {
-      "id": "73a157a2-177c-4986-ab62-909c088cfa45",
-      "name": "Annie",
-      "engine": "indextts2",
-      "reference_file": "references/custom_uploads/73a157a2-177c-4986-ab62-909c088cfa45.wav",
-      "tags": [
-        "Female",
-        "American",
-        "Conversational"
-      ],
-      "created_at": "2025-11-28T00:24:12.468892Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
       "metadata": {}
@@ -41,6 +26,461 @@
         "Narrator"
       ],
       "created_at": "2025-11-28T00:56:33.567999Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "be15ab67-12e3-4239-a399-bfd983955521",
+      "name": "George",
+      "engine": "styletts2",
+      "reference_file": "references/custom_uploads/be15ab67-12e3-4239-a399-bfd983955521.wav",
+      "tags": [
+        "Male American",
+        "Narrator",
+        "Deep",
+        "Mature"
+      ],
+      "created_at": "2025-11-28T04:05:22.831720Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "f88ade13-9bb6-40ac-9e94-fc20deaef68f",
+      "name": "Alice",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/f88ade13-9bb6-40ac-9e94-fc20deaef68f.wav",
+      "tags": [
+        "Southern",
+        "American",
+        "Female",
+        "Storyteller"
+      ],
+      "created_at": "2025-11-28T05:07:04.900272Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "fea71330-137c-4247-8bde-de8510dd9531",
+      "name": "Angela",
+      "engine": "styletts2",
+      "reference_file": "references/custom_uploads/fea71330-137c-4247-8bde-de8510dd9531.wav",
+      "tags": [
+        "Female",
+        "American",
+        "Narrative"
+      ],
+      "created_at": "2025-11-28T05:38:16.136398Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "0cfdbfd4-1a02-4906-85d8-ff63eef681b5",
+      "name": "Mary-Sue",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/0cfdbfd4-1a02-4906-85d8-ff63eef681b5.wav",
+      "tags": [
+        "Female",
+        "American",
+        "Friendly"
+      ],
+      "created_at": "2025-11-28T05:41:14.328757Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "bdde5d97-d3ef-4a45-8be7-5131fcfcc410",
+      "name": "Claire",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/bdde5d97-d3ef-4a45-8be7-5131fcfcc410.wav",
+      "tags": [
+        "Female",
+        "American",
+        "Light reader"
+      ],
+      "created_at": "2025-11-28T05:51:07.016363Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "aff38e60-72e3-49ea-9745-c3945cba2844",
+      "name": "Dorothy",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/aff38e60-72e3-49ea-9745-c3945cba2844.wav",
+      "tags": [
+        "American",
+        "Old Style",
+        "Female"
+      ],
+      "created_at": "2025-11-28T05:54:55.344261Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "6c5332ab-dce7-4301-88f0-a2e902a0daa8",
+      "name": "Maggie",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/6c5332ab-dce7-4301-88f0-a2e902a0daa8.wav",
+      "tags": [
+        "American",
+        "Female",
+        "Expressive"
+      ],
+      "created_at": "2025-11-28T06:00:26.621046Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "0ef25883-352f-4acb-bb91-a259cd3e2b86",
+      "name": "Bobby",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/0ef25883-352f-4acb-bb91-a259cd3e2b86.wav",
+      "tags": [
+        "Male",
+        "American",
+        "Deep Conversational"
+      ],
+      "created_at": "2025-11-28T06:04:17.925002Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "9ee21cf7-1979-4126-b5a0-d9df2c09a4e7",
+      "name": "Colin",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/9ee21cf7-1979-4126-b5a0-d9df2c09a4e7.wav",
+      "tags": [
+        "Boy",
+        "American",
+        "conversational"
+      ],
+      "created_at": "2025-11-28T06:10:42.583785Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "1de3c4ba-38fd-4dae-af24-df68b8ade5c6",
+      "name": "Jack",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/1de3c4ba-38fd-4dae-af24-df68b8ade5c6.wav",
+      "tags": [
+        "American",
+        "Upbeat",
+        "Male"
+      ],
+      "created_at": "2025-11-28T06:15:25.999056Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "74ff618b-5cbc-4bbf-bffa-cda384ffa09b",
+      "name": "Ugo",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/74ff618b-5cbc-4bbf-bffa-cda384ffa09b.wav",
+      "tags": [
+        "Female",
+        "African Accent",
+        "Calm"
+      ],
+      "created_at": "2025-11-28T06:20:04.578927Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "91d71252-4f92-4543-8050-d19872c72827",
+      "name": "Agnes",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/91d71252-4f92-4543-8050-d19872c72827.wav",
+      "tags": [
+        "Female",
+        "British",
+        "Story teller"
+      ],
+      "created_at": "2025-11-28T06:26:11.625171Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "81d3a2d1-bd4d-4e91-aac4-4179e698bfee",
+      "name": "Tony",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/81d3a2d1-bd4d-4e91-aac4-4179e698bfee.wav",
+      "tags": [
+        "Male",
+        "British",
+        "Storyteller"
+      ],
+      "created_at": "2025-11-28T06:30:15.204390Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "bf8d176c-7e89-4f05-98c5-6377b759fabb",
+      "name": "John",
+      "engine": "styletts2",
+      "reference_file": "references/custom_uploads/bf8d176c-7e89-4f05-98c5-6377b759fabb.wav",
+      "tags": [
+        "British",
+        "Male",
+        "Narrator"
+      ],
+      "created_at": "2025-11-28T06:37:01.222765Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "a5495e45-2c9e-4427-a79c-0544bba1b5f2",
+      "name": "Pauline",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/a5495e45-2c9e-4427-a79c-0544bba1b5f2.wav",
+      "tags": [
+        "Female",
+        "European Accent",
+        "Storyteller"
+      ],
+      "created_at": "2025-11-28T06:39:05.688264Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "f83ca972-d335-44b1-b0b4-2c4b6168d59e",
+      "name": "Sarah",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/f83ca972-d335-44b1-b0b4-2c4b6168d59e.wav",
+      "tags": [
+        "Female",
+        "British",
+        "Young",
+        "Announcer"
+      ],
+      "created_at": "2025-11-28T06:43:27.017692Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "32a40fac-3aef-4515-9871-4cf5ca83cc5f",
+      "name": "Ian",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/32a40fac-3aef-4515-9871-4cf5ca83cc5f.wav",
+      "tags": [
+        "Male",
+        "British",
+        "Storyteller"
+      ],
+      "created_at": "2025-11-28T06:47:13.122368Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "543c8cd8-be36-490b-9699-0b8c64c6763c",
+      "name": "Camile - Young energetic",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/543c8cd8-be36-490b-9699-0b8c64c6763c.wav",
+      "tags": [
+        "Female",
+        "American",
+        "Announcer"
+      ],
+      "created_at": "2025-11-28T06:50:47.833981Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "23042d3b-ffd8-4c61-933c-ad3bb083e2c6",
+      "name": "Sarah-Lee",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/23042d3b-ffd8-4c61-933c-ad3bb083e2c6.wav",
+      "tags": [
+        "Female",
+        "British",
+        "Phone",
+        "Answering",
+        "Phone message"
+      ],
+      "created_at": "2025-11-28T06:56:29.740016Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "2c974341-1a93-4505-83b2-88a2c35c40d7",
+      "name": "Bradley",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/2c974341-1a93-4505-83b2-88a2c35c40d7.wav",
+      "tags": [
+        "American",
+        "Male",
+        "Narrator"
+      ],
+      "created_at": "2025-11-28T07:00:22.507046Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "de33e45a-6246-46d5-8f60-6a3bcd71c188",
+      "name": "Amir",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/de33e45a-6246-46d5-8f60-6a3bcd71c188.wav",
+      "tags": [
+        "Male",
+        "Middle Eastern Accent",
+        "Narrator"
+      ],
+      "created_at": "2025-11-28T07:03:36.768958Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "ea43ea2e-3c00-4809-b6d4-eeb26cc5e59a",
+      "name": "Anastatia -Young, Energertic",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/ea43ea2e-3c00-4809-b6d4-eeb26cc5e59a.wav",
+      "tags": [
+        "Female",
+        "British",
+        "Announcer",
+        "Phone Message"
+      ],
+      "created_at": "2025-11-28T07:07:28.139892Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "b3cf6fd6-9b10-4fab-9b9c-3392f8ea7ef5",
+      "name": "Kate",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/b3cf6fd6-9b10-4fab-9b9c-3392f8ea7ef5.wav",
+      "tags": [
+        "Female",
+        "American",
+        "Narrator"
+      ],
+      "created_at": "2025-11-28T07:11:44.808779Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "87283b73-7a7f-4bce-9dee-a51ace197c92",
+      "name": "Loretta",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/87283b73-7a7f-4bce-9dee-a51ace197c92.mp3",
+      "tags": [
+        "Female",
+        "Nigerian Accent",
+        "Calm"
+      ],
+      "created_at": "2025-11-28T07:17:40.229454Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "71b18db5-50f2-4364-b9bf-96a83432ab60",
+      "name": "Lori",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/71b18db5-50f2-4364-b9bf-96a83432ab60.wav",
+      "tags": [
+        "Girl",
+        "American"
+      ],
+      "created_at": "2025-11-28T07:22:17.594820Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "f45b4cea-1c43-4766-b12b-dc89337a1253",
+      "name": "Kira",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/f45b4cea-1c43-4766-b12b-dc89337a1253.wav",
+      "tags": [
+        "Female",
+        "Office",
+        "Storyteller"
+      ],
+      "created_at": "2025-11-28T07:28:44.491991Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "0a1bfc32-6ab9-4312-869b-917121ff90b3",
+      "name": "Herb",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/0a1bfc32-6ab9-4312-869b-917121ff90b3.wav",
+      "tags": [
+        "Male",
+        "British",
+        "Narrator"
+      ],
+      "created_at": "2025-11-28T07:32:17.200696Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "ab805cf2-0fa6-49c6-a22b-c30b6978e4a1",
+      "name": "Naz",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/ab805cf2-0fa6-49c6-a22b-c30b6978e4a1.wav",
+      "tags": [
+        "Male",
+        "British",
+        "Announcer"
+      ],
+      "created_at": "2025-11-28T13:03:11.057464Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "43dced91-e5d6-4b8b-a299-a4c97004a2a7",
+      "name": "Meg",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/43dced91-e5d6-4b8b-a299-a4c97004a2a7.wav",
+      "tags": [
+        "Female",
+        "American",
+        "High tone"
+      ],
+      "created_at": "2025-11-28T13:13:33.996765Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {}
+    },
+    {
+      "id": "7cb09225-91d3-4e06-9485-cb082d39296e",
+      "name": "Glen",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/7cb09225-91d3-4e06-9485-cb082d39296e.wav",
+      "tags": [
+        "Male",
+        "British",
+        "Announcer"
+      ],
+      "created_at": "2025-11-28T17:22:24.360727Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
       "metadata": {}

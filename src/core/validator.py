@@ -16,6 +16,7 @@ class ValidationResult:
         self.score = 100
         self.issues = []
         self.warnings = []
+        self.clarifications = []
     
     def add_error(self, message: str, severity: int = 20):
         """Add an error (deducts from score)"""
@@ -26,6 +27,18 @@ class ValidationResult:
         """Add a warning (minor score deduction)"""
         self.warnings.append(f"⚠️  {message}")
         self.score = max(0, self.score - severity)
+
+    def add_clarification(self, block_index: int, speaker: str, text: str, reason: str):
+        """Track lines that may need human clarification/editing."""
+        snippet = text.strip()
+        if len(snippet) > 140:
+            snippet = snippet[:137] + "..."
+        self.clarifications.append({
+            "block_index": block_index,
+            "speaker": speaker,
+            "text": snippet,
+            "reason": reason
+        })
     
     def is_passing(self, threshold: int = 70) -> bool:
         """Check if quality meets threshold"""
@@ -115,6 +128,8 @@ class ABMLValidator:
                 f"Block {index} ({speaker}): Stage directions found: {', '.join(found_directions)}",
                 severity=20
             )
+            # Add clarification entry so UI can surface it for rewrite
+            result.add_clarification(index, speaker, text, f"Contains: {', '.join(found_directions)}")
         
         # Check 3: Emotion adverbs (less severe)
         found_adverbs = []

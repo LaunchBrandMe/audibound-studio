@@ -168,7 +168,21 @@ class ScriptDirector:
            - "urgent", "rushed", "hurried"
            - Leave empty if neutral tone
         
-        4. OUTPUT FORMAT:
+        5. VOCAL SFX (CRITICAL):
+           - Convert non-speech vocal sounds (laughing, crying, sighing, gasping, screaming) into SFX blocks, NOT narration text.
+           - ❌ WRONG (Narration): {{"text": "She laughed loudly."}}
+           - ✅ RIGHT (SFX): {{"type": "sfx", "effect": "woman laughing loudly"}}
+           
+        6. MUSIC CUES (IMPORTANT):
+           - Add music blocks for scene transitions, emotional peaks, tension building, or atmospheric moments.
+           - Examples:
+             * Scene openings: {{"type": "music", "cue": "ominous ambient drone"}}
+             * Action sequences: {{"type": "music", "cue": "fast-paced suspenseful strings"}}
+             * Emotional moments: {{"type": "music", "cue": "melancholy piano"}}
+             * Cosmic/sci-fi: {{"type": "music", "cue": "ethereal synth pads with deep bass"}}
+           - Music should ENHANCE the mood, not distract from dialogue
+           
+        7. OUTPUT FORMAT:
            For dialogue: {{"type": "dialogue", "speaker": "Name", "text": "clean dialogue only", "style": "emotion"}}
            For narration: {{"type": "narration", "speaker": "Narrator", "text": "clean description", "style": "emotion"}}
            For SFX: {{"type": "sfx", "effect": "door slams"}}
@@ -179,21 +193,37 @@ class ScriptDirector:
         Input: 'Sarah burst through the door. "I got it!" she shouted excitedly.'
         Output:
         [
-          {{"type": "narration", "speaker": "Narrator", "text": "Sarah burst through the door."}},
+          {{"type": "sfx", "effect": "door bursts open"}},
           {{"type": "dialogue", "speaker": "Sarah", "text": "I got it!", "style": "excited"}}
         ]
         
         Input: 'Tom sighed heavily. "This is terrible," he whispered.'  
         Output:
         [
-          {{"type": "narration", "speaker": "Narrator", "text": "Tom sighed.", "style": "weary"}},
+          {{"type": "sfx", "effect": "man sighs heavily"}},
           {{"type": "dialogue", "speaker": "Tom", "text": "This is terrible.", "style": "whispering"}}
+        ]
+        
+        Input: 'She laughed uncontrollably. "You are joking!"'
+        Output:
+        [
+          {{"type": "sfx", "effect": "woman laughing uncontrollably"}},
+          {{"type": "dialogue", "speaker": "She", "text": "You are joking!", "style": "laughing"}}
+        ]
+        
+        Input: 'The starship entered the nebula. Red clouds swirled around the hull as sensors blared warnings.'
+        Output:
+        [
+          {{"type": "music", "cue": "ominous sci-fi ambient with rising tension"}},
+          {{"type": "narration", "speaker": "Narrator", "text": "The starship entered the nebula. Red clouds swirled around the hull.", "style": "tense"}},
+          {{"type": "sfx", "effect": "electronic alarm blaring"}}
         ]
         
         **REMEMBER**: 
         - NO "said/shouted/whispered" in text!
         - Clean dialogue ONLY!
         - Emotions go in "style" field!
+        - Add music for atmospheric moments!
         
         Output valid JSON matching Scene schema.
         

@@ -1,211 +1,196 @@
-"""Modal deployment for Sesame CSM 1B.
-
-This image installs the Sesame CSM model and its dependencies.
-It requires a Hugging Face token to be available in the 'huggingface-secret' secret.
-"""
+"""Modal deployment for Sesame CSM 1B using Hugging Face transformers."""
 
 from __future__ import annotations
 
+import base64
 import io
-import os
 from pathlib import Path
 from typing import Dict, Any, Optional
 
 import modal
 
 SESAME_APP_NAME = "audibound-sesame"
+MODEL_ID = "sesame/csm-1b"
+ASR_MODEL_ID = "openai/whisper-base"
 CACHE_ROOT = Path("/cache/sesame")
 HF_CACHE = CACHE_ROOT / "huggingface"
 
-# Define the image
 image = (
     modal.Image.debian_slim(python_version="3.10")
-    .apt_install("git", "ffmpeg")
+    .apt_install("ffmpeg")
     .pip_install(
-        "torch==2.1.2",
-        "torchaudio==2.1.2",
-        "transformers==4.39.3", # Pinned based on recent compatibility
-        "huggingface_hub",
-        "scipy",
-        "numpy",
-        "einops",
-        "tqdm",
-        "librosa",
+        "numpy<2",  # Fix NumPy 2.x compatibility issue
+        "torch==2.4.0",
+        "torchaudio==2.4.0",
+        extra_options="--extra-index-url https://download.pytorch.org/whl/cu121"
+    )
+    .pip_install(
+        "transformers>=4.46.0",  # Upgraded for CSM support (requires Torch 2.4+)
+        "datasets",
+        "accelerate",
         "soundfile",
-        "fastapi"
+        "huggingface_hub",
+        "fastapi",
+        "einops",
+        "tqdm"
     )
-    .run_commands(
-        "git clone https://github.com/SesameAILabs/csm.git /csm",
-        "cd /csm && pip install -r requirements.txt"
-    )
-    .env({"PYTHONPATH": "/csm"})
 )
 
 app = modal.App(SESAME_APP_NAME, image=image)
 model_volume = modal.Volume.from_name("sesame-models", create_if_missing=True)
 
+
 def _ensure_dirs() -> None:
-    for path in (CACHE_ROOT, HF_CACHE):
-        path.mkdir(parents=True, exist_ok=True)
+    HF_CACHE.mkdir(parents=True, exist_ok=True)
+
 
 @app.cls(
-    gpu="T4", # Sesame runs on T4, though A10G is better if available. T4 is cheaper/more available.
+    gpu="T4",
     timeout=600,
     memory=16384,
     volumes={"/cache": model_volume},
     secrets=[modal.Secret.from_name("huggingface-secret")],
 )
 class SesameWorker:
+    processor = None
+    model = None
+    asr = None
+    device: str = "cpu"
+    sample_rate: int = 24000
+
     @modal.enter()
     def setup(self) -> None:
         import os
+        import torch
         from huggingface_hub import login
-        
+
+        if not torch.cuda.is_available():
+            raise RuntimeError("CUDA is not available! Aborting to save credits.")
+            
+        # Try different import strategies for CSM model
+        try:
+            from transformers import AutoProcessor, AutoModelForTextToWaveform, pipeline
+            model_class = AutoModelForTextToWaveform
+            print("[Sesame] Using AutoModelForTextToWaveform")
+        except ImportError:
+            try:
+                from transformers import AutoProcessor, AutoModel, pipeline
+                model_class = AutoModel
+                print("[Sesame] Using AutoModel")
+            except ImportError:
+                raise ImportError("Could not import required transformers classes for Sesame CSM")
+
         _ensure_dirs()
         os.environ["HF_HOME"] = str(HF_CACHE)
-        
-        # Authenticate with Hugging Face
+
         hf_token = os.environ.get("HF_TOKEN")
         if hf_token:
-            print("[Sesame] Logging in to Hugging Face...")
+            print("[Sesame] Logging into Hugging Face ...")
             login(token=hf_token)
         else:
-            print("[Sesame] WARNING: HF_TOKEN not found in environment. Model download may fail if gated.")
+            print("[Sesame] WARNING: HF_TOKEN missing; gated downloads may fail.")
 
-        # Import here to ensure PYTHONPATH is set and deps are ready
-        try:
-            from generator import load_csm_1b, Segment
-        except ImportError:
-            import sys
-            sys.path.append("/csm")
-            from generator import load_csm_1b, Segment
-        
-        # Store Segment class for use in generate
-        self.Segment = Segment
-
-        import torch
-        from transformers import pipeline
-        
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        print(f"[Sesame] Loading model on {device}...")
-        self._generator = load_csm_1b(device=device)
-        
-        # Load Whisper for transcription (needed for voice cloning context)
-        print("[Sesame] Loading Whisper for transcription...")
-        self.transcriber = pipeline(
-            "automatic-speech-recognition", 
-            model="openai/whisper-tiny.en", 
-            device=device
+        self.device = "cuda"
+        print(f"[Sesame] Loading model on {self.device}")
+        print(f"[Sesame] Loading processor from {MODEL_ID}...")
+        self.processor = AutoProcessor.from_pretrained(MODEL_ID, trust_remote_code=True)
+        print(f"[Sesame] Loading model from {MODEL_ID}...")
+        self.model = model_class.from_pretrained(
+            MODEL_ID,
+            device_map="auto" if self.device == "cuda" else None,
+            trust_remote_code=True
         )
-        print("[Sesame] Models ready")
+        self.sample_rate = getattr(self.processor.feature_extractor, 'sampling_rate', 24000)
 
-    @modal.method()
-    def generate(
-        self,
-        text: str,
-        voice_sample_url: Optional[str] = None,
-        voice_sample_bytes: Optional[str] = None,  # Base64 encoded
-        speaker_id: int = 0,
-    ) -> bytes:
+        print("[Sesame] Loading ASR model for context transcription ...")
+        self.asr = pipeline(
+            "automatic-speech-recognition",
+            model=ASR_MODEL_ID,
+            device=0 if self.device == "cuda" else -1
+        )
+        print("[Sesame] Setup complete")
+
+    def _prepare_context(self, voice_sample_bytes: Optional[str]) -> Optional[dict]:
+        import numpy as np
+        import soundfile as sf
         import torch
         import torchaudio
-        import numpy as np
-        import base64
-        import tempfile
-        import os
-        
+
+        if not voice_sample_bytes:
+            return None
+        try:
+            print(f"[Sesame] Decoding reference audio (b64 length: {len(voice_sample_bytes)})")
+            decoded = base64.b64decode(voice_sample_bytes)
+            print(f"[Sesame] Decoded audio bytes: {len(decoded)}")
+
+            audio_np, sr = sf.read(io.BytesIO(decoded), dtype="float32")
+            print(f"[Sesame] Audio loaded: shape={audio_np.shape}, sr={sr}")
+
+            if audio_np.ndim > 1:
+                audio_np = audio_np.mean(axis=1)
+                print(f"[Sesame] Converted stereo to mono: shape={audio_np.shape}")
+
+            audio_tensor = torch.from_numpy(audio_np).unsqueeze(0)
+            if sr != self.sample_rate:
+                print(f"[Sesame] Resampling reference {sr} -> {self.sample_rate}")
+                resampler = torchaudio.transforms.Resample(sr, self.sample_rate)
+                audio_tensor = resampler(audio_tensor)
+
+            audio_np = audio_tensor.squeeze(0).numpy()
+            print(f"[Sesame] Running ASR on reference audio...")
+
+            transcription = self.asr({
+                "array": audio_np,
+                "sampling_rate": self.sample_rate
+            })["text"].strip()
+            print(f"[Sesame] Context transcription: '{transcription}'")
+
+            return {
+                "role": "0",
+                "content": [
+                    {"type": "text", "text": transcription or "context"},
+                    {"type": "audio", "audio": audio_np}
+                ]
+            }
+        except Exception as exc:
+            import traceback
+            print(f"[Sesame] Context processing failed: {exc}")
+            print(f"[Sesame] Traceback: {traceback.format_exc()}")
+            raise  # Re-raise to get full error in Modal logs
+
+    @modal.method()
+    def generate(self, text: str, voice_sample_bytes: Optional[str] = None) -> bytes:
+        import soundfile as sf
+        import torch
+
         if not text:
             raise ValueError("Text is required")
+        conversation = []
+        ctx = self._prepare_context(voice_sample_bytes)
+        if ctx:
+            conversation.append(ctx)
+        conversation.append({
+            "role": "0",
+            "content": [{"type": "text", "text": text}]
+        })
 
-        print(f"[Sesame] Generating text: '{text}'")
-        
-        # Handle voice cloning
-        context = []
-        if voice_sample_bytes or voice_sample_url:
-            print("[Sesame] Voice cloning mode enabled")
-            
-            try:
-                # Load reference audio
-                tmp_path = None
-                if voice_sample_bytes:
-                    print("[Sesame] Decoding base64 reference audio...")
-                    audio_data = base64.b64decode(voice_sample_bytes)
-                    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp:
-                        tmp.write(audio_data)
-                        tmp_path = tmp.name
-                elif voice_sample_url:
-                    print(f"[Sesame] Downloading reference from URL...")
-                    import requests
-                    response = requests.get(voice_sample_url)
-                    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp:
-                        tmp.write(response.content)
-                        tmp_path = tmp.name
-                
-                if tmp_path:
-                    # 1. Transcribe audio to get text (required for Segment)
-                    print("[Sesame] Transcribing reference audio...")
-                    transcription = self.transcriber(tmp_path)["text"].strip()
-                    print(f"[Sesame] Transcription: '{transcription}'")
-                    
-                    # 2. Load audio for context
-                    reference_audio, sr = torchaudio.load(tmp_path)
-                    
-                    # Resample to 24kHz (required by CSM)
-                    target_sr = 24000
-                    if sr != target_sr:
-                        print(f"[Sesame] Resampling from {sr}Hz to {target_sr}Hz...")
-                        resampler = torchaudio.transforms.Resample(sr, target_sr)
-                        reference_audio = resampler(reference_audio)
-                    
-                    # Convert to mono if stereo
-                    if reference_audio.shape[0] > 1:
-                        reference_audio = reference_audio.mean(dim=0, keepdim=True)
-                    
-                    # Move to correct device
-                    device = "cuda" if torch.cuda.is_available() else "cpu"
-                    reference_audio = reference_audio.to(device)
-                    
-                    # 3. Create Segment object
-                    # Audio expects 1D tensor (remove channel dim)
-                    audio_tensor = reference_audio.squeeze(0)
-                    
-                    segment = self.Segment(
-                        speaker=speaker_id,
-                        text=transcription,
-                        audio=audio_tensor
-                    )
-                    context = [segment]
-                    print(f"[Sesame] Created context Segment with transcription")
-                    
-                    # Cleanup
-                    os.unlink(tmp_path)
-                
-            except Exception as e:
-                print(f"[Sesame] WARNING: Failed to process reference audio: {e}")
-                print("[Sesame] Falling back to default voice")
-                context = []
-        
-        # Generate audio with cloning context or default voice
-        print(f"[Sesame] Calling generate with text='{text}', speaker={speaker_id}, context_len={len(context)}")
-        
-        audio = self._generator.generate(
-            text=text,
-            speaker=speaker_id,
-            context=context,
-            max_audio_length_ms=30_000,
-        )
-        
-        # Convert to WAV bytes
+        inputs = self.processor.apply_chat_template(
+            conversation,
+            tokenize=True,
+            return_dict=True,
+        ).to(self.model.device)
+
+        with torch.no_grad():
+            audio_outputs = self.model.generate(**inputs, output_audio=True)
+        audio_np = audio_outputs[0]
         buffer = io.BytesIO()
-        audio_cpu = audio.unsqueeze(0).cpu()
-        
-        torchaudio.save(buffer, audio_cpu, self._generator.sample_rate, format="wav")
-        payload = buffer.getvalue()
-        
-        print(f"[Sesame] Generated {len(payload)} bytes")
-        return payload
+        sf.write(buffer, audio_np, self.sample_rate, format="WAV")
+        buffer.seek(0)
+        return buffer.read()
+
 
 worker = SesameWorker()
+
 
 @app.function()
 @modal.fastapi_endpoint(method="POST")
@@ -214,24 +199,17 @@ def generate_speech(item: Dict[str, Any]):
     from fastapi.responses import Response
 
     text = (item or {}).get("text", "").strip()
-    voice_sample_url = (item or {}).get("voice_sample_url")
-    voice_sample_bytes = (item or {}).get("voice_sample_bytes")
-    
     if not text:
         raise HTTPException(status_code=400, detail="Text is required")
 
+    voice_sample_bytes = item.get("voice_sample_bytes")
     try:
-        audio_bytes = worker.generate.remote(
-            text,
-            voice_sample_url=voice_sample_url,
-            voice_sample_bytes=voice_sample_bytes
-        )
-        
+        audio_bytes = worker.generate.remote(text=text, voice_sample_bytes=voice_sample_bytes)
         return Response(
             content=audio_bytes,
             media_type="audio/wav",
-            headers={"Content-Disposition": "attachment; filename=sesame.wav"},
+            headers={"Content-Disposition": "attachment; filename=sesame.wav"}
         )
-    except Exception as e:
-        print(f"Error generating speech: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as exc:
+        print(f"[Sesame] Generation error: {exc}")
+        raise HTTPException(status_code=500, detail=str(exc))

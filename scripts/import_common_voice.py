@@ -4,10 +4,12 @@ Utility to bulk-import speakers from a downloaded Mozilla Common Voice dataset
 into the local voice library so they can be cloned with IndexTTS2/StyleTTS2.
 
 Usage:
-    python scripts/import_common_voice.py --dataset /path/to/commonvoice/en --count 10 --engine indextts2
+    python scripts/import_common_voice.py --dataset /path/to/commonvoice/en
+                                          --count 10
+                                          --engine indextts2
 
-The script reads the dataset's `validated.tsv`, copies the referenced clips
-into the voice library (reusing `VoiceLibrary.add_voice`), and tags them.
+The script looks at the dataset's `validated.tsv`, copies the referenced clips
+into `references/custom_uploads`, and registers them via VoiceLibrary.
 """
 
 import argparse
@@ -19,17 +21,17 @@ from src.core.voice_library import get_voice_library
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Import Common Voice speakers")
+    parser = argparse.ArgumentParser(description="Import speakers from Common Voice")
     parser.add_argument("--dataset", required=True, type=Path,
-                        help="Root folder of the extracted Common Voice dataset (contains validated.tsv/clips)")
+                        help="Root folder of the extracted Common Voice dataset (contains validated.tsv)")
     parser.add_argument("--count", type=int, default=5,
                         help="How many speakers to import (default: 5)")
     parser.add_argument("--engine", default="indextts2", choices=["indextts2", "styletts2", "sesame"],
-                        help="Engine tag to store with each imported voice")
+                        help="Engine tag to store with the voice (defaults to indextts2)")
     parser.add_argument("--min-seconds", type=float, default=4.0,
                         help="Minimum clip duration to keep (default 4s)")
     parser.add_argument("--language", default=None,
-                        help="Optional language/accent tag to add to the voice")
+                        help="Optional language/accent tag to add")
     return parser.parse_args()
 
 
@@ -94,7 +96,7 @@ def main() -> None:
         print(f"Imported {name} from {clip_path}")
 
     if imported == 0:
-        print("No clips met the criteria. Try lowering --min-seconds or verify the dataset path.")
+        print("No clips met the criteria. Try lowering --min-seconds or verifying the dataset path.")
     else:
         print(f"Done. Imported {imported} voices into the library.")
 
