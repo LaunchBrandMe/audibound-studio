@@ -226,6 +226,8 @@
             <button onclick="createProject()">Create Project</button>
         </div>
 
+        <div id="global-outputs" class="card"></div>
+
         <div id="projects" class="projects-empty">No projects yet. Create one to get started.</div>
     </div>
 
@@ -241,6 +243,7 @@
         const projectStore = {};
         const projectOrder = [];
         const projectPollers = {};
+        let globalOutputs = [];
         const STYLE_OPTIONS = [
             'neutral', 'calm', 'joyful', 'excited', 'angry', 'furious', 'sad', 'melancholy', 'tired', 'somber', 'whispering', 'soft', 'urgent', 'surprised'
         ];
@@ -270,6 +273,12 @@
                     availableVoices: data.available_voices || {},
                     validation_summary: data.validation_summary || null,
                     loadingAction: null,
+                    productionOptions: {
+                        include_voice: true,
+                        include_sfx: true,
+                        include_music: true,
+                        reuse_voice_cache: true,
+                    },
                 };
                 projectOrder.unshift(id);
             }
@@ -343,6 +352,7 @@
                     <strong>Quality Score: ${validation.score}/100</strong>
                     ${validation.issues && validation.issues.length ? `<div class="issues"><strong>Issues:</strong><ul>${validation.issues.map(i => `<li>${i}</li>`).join('')}</ul></div>` : ''}
                     ${validation.warnings && validation.warnings.length ? `<div class="issues"><strong>Warnings:</strong><ul>${validation.warnings.map(i => `<li>${i}</li>`).join('')}</ul></div>` : ''}
+                    ${validation.clarifications && validation.clarifications.length ? `<div class="issues"><strong>Needs clarification (click to copy):</strong><ul>${validation.clarifications.map((c, idx) => `<li><button style="padding:4px 8px; margin-right:6px; background:#e0e7ff; color:#1d4ed8; border:none; border-radius:6px; cursor:pointer;" onclick="copyText('${project.project_id}', ${idx})">Copy</button> [Block ${c.block_index}] ${c.reason}: “${c.text.replace(/"/g, '&quot;')}”</li>`).join('')}</ul></div>` : ''}
                 </div>`
                 : '<p class="muted">Run Direct Script to generate the character breakdown and quality score.</p>';
 
@@ -427,16 +437,18 @@
         }
 
         function renderProductionView(project) {
+            const opts = project.productionOptions || { include_voice: true, include_sfx: true, include_music: true, reuse_voice_cache: true };
             const history = (project.render_history && project.render_history.length)
                 ? project.render_history.map(entry => `
                     <div class="history-entry">
-                        <span>${entry.timestamp} — ${entry.engine}</span>
+                        <span>${entry.timestamp} — ${entry.engine} ${entry.layers ? ' · ' + entry.layers.join(' / ') : ''}</span>
                         <div style="display:flex; gap:8px;">
                             ${entry.output_path ? `
                                 <button onclick="playAudio('${entry.output_path}')" style="padding:4px 10px; font-size:0.85rem;">▶ Play</button>
                                 <a href="${entry.output_path}" download style="padding:4px 10px; background:#10b981; color:#fff; border-radius:6px; text-decoration:none; font-size:0.85rem;">⬇ Download</a>
                             ` : '<span class="muted">Pending</span>'}
                         </div>
+                        ${entry.notes && entry.notes.length ? `<div class="muted small" style="margin-top:4px;">${entry.notes.join(' | ')}</div>` : ''}
                     </div>`).join('')
                 : '<p class="muted">No productions yet.</p>';
             return `
@@ -444,6 +456,27 @@
                     <div>
                         <h4>Produce Audio</h4>
                         <p class="small muted">Engine is automatically detected from character voice assignments</p>
+                        <div class="list" style="margin:12px 0;">
+                            <div class="small" style="margin-bottom:6px;">Layers to render:</div>
+                            <label class="small" style="display:block; margin-bottom:4px;">
+                                <input type="checkbox" ${opts.include_voice ? 'checked' : ''} onchange="setProdOption('${project.project_id}','include_voice', this.checked)"> Voice
+                            </label>
+                            <label class="small" style="display:block; margin-bottom:4px;">
+                                <input type="checkbox" ${opts.include_sfx ? 'checked' : ''} onchange="setProdOption('${project.project_id}','include_sfx', this.checked)"> SFX
+                            </label>
+                            <label class="small" style="display:block; margin-bottom:4px;">
+                                <input type="checkbox" ${opts.include_music ? 'checked' : ''} onchange="setProdOption('${project.project_id}','include_music', this.checked)"> Music
+                            </label>
+                            <label class="small" style="display:block; margin-top:6px;">
+                                <input type="checkbox" ${opts.reuse_voice_cache ? 'checked' : ''} onchange="setProdOption('${project.project_id}','reuse_voice_cache', this.checked)"> Reuse voice cache (skip regen when possible)
+                            </label>
+                            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">
+                                <button style="padding:6px 10px; background:#e5e7eb; color:#111827;" onclick="applyPreset('${project.project_id}','voice')">Voice only</button>
+                                <button style="padding:6px 10px; background:#e5e7eb; color:#111827;" onclick="applyPreset('${project.project_id}','sfx')">SFX only</button>
+                                <button style="padding:6px 10px; background:#e5e7eb; color:#111827;" onclick="applyPreset('${project.project_id}','music')">Music only</button>
+                                <button style="padding:6px 10px; background:#e5e7eb; color:#111827;" onclick="applyPreset('${project.project_id}','all')">All layers</button>
+                            </div>
+                        </div>
                         <div class="flex" style="gap:12px; margin-top:14px; flex-wrap:wrap;">
                             <button onclick="triggerAction('${project.project_id}', 'produce')" ${project.manifest ? '' : 'disabled title="Run Direct Script first"'} ${project.loadingAction === 'produce' ? 'disabled' : ''}>
                                 ${project.loadingAction === 'produce' ? '<span class="spinner"></span>Producing…' : 'Produce Audio'}
@@ -533,6 +566,32 @@
             project.voice_overrides[characterName][field] = value || undefined;
         }
 
+        function setProdOption(projectId, key, value) {
+            const project = projectStore[projectId];
+            if (!project) return;
+            project.productionOptions = project.productionOptions || {
+                include_voice: true,
+                include_sfx: true,
+                include_music: true,
+                reuse_voice_cache: true
+            };
+            project.productionOptions[key] = value;
+            renderProjects();
+        }
+
+        function applyPreset(projectId, preset) {
+            const presets = {
+                voice: { include_voice: true, include_sfx: false, include_music: false },
+                sfx: { include_voice: false, include_sfx: true, include_music: false },
+                music: { include_voice: false, include_sfx: false, include_music: true },
+                all: { include_voice: true, include_sfx: true, include_music: true }
+            };
+            const chosen = presets[preset] || presets.all;
+            setProdOption(projectId, 'include_voice', chosen.include_voice);
+            setProdOption(projectId, 'include_sfx', chosen.include_sfx);
+            setProdOption(projectId, 'include_music', chosen.include_music);
+        }
+
         async function saveOverrides(projectId) {
             const project = projectStore[projectId];
             if (!project) return;
@@ -551,6 +610,17 @@
             }
         }
 
+        function copyText(projectId, clarificationIndex) {
+            const project = projectStore[projectId];
+            if (!project || !project.validation_summary || !project.validation_summary.clarifications) return;
+            const item = project.validation_summary.clarifications[clarificationIndex];
+            if (!item) return;
+            const text = item.text || '';
+            navigator.clipboard.writeText(text).then(() => {
+                showFlash('Copied snippet to clipboard.', 'success');
+            }).catch(() => showFlash('Unable to copy.', 'error'));
+        }
+
         async function triggerAction(projectId, action) {
             const project = projectStore[projectId];
             if (!project || project.loadingAction) return;
@@ -563,8 +633,15 @@
                 // Auto-detect engine from character voice assignments
                 // Default to kokoro_multi, but this will be overridden by per-character engines
                 const engine = 'kokoro_multi';
+                const opts = project.productionOptions || { include_voice: true, include_sfx: true, include_music: true, reuse_voice_cache: true };
                 fetchOptions.headers = { 'Content-Type': 'application/json' };
-                fetchOptions.body = JSON.stringify({ engine });
+                fetchOptions.body = JSON.stringify({
+                    engine,
+                    include_voice: !!opts.include_voice,
+                    include_sfx: !!opts.include_sfx,
+                    include_music: !!opts.include_music,
+                    reuse_voice_cache: !!opts.reuse_voice_cache
+                });
             }
             try {
                 const res = await fetch(`${API_URL}/projects/${projectId}/${action}`, fetchOptions);
@@ -583,16 +660,31 @@
 
         function startPolling(projectId, stopStatus) {
             if (projectPollers[projectId]) clearInterval(projectPollers[projectId]);
+
+            // Add a timeout to prevent infinite polling (5 minutes max)
+            const startTime = Date.now();
+            const maxDuration = 5 * 60 * 1000; // 5 minutes
+
             projectPollers[projectId] = setInterval(async () => {
                 const data = await loadProject(projectId, { silent: true });
                 const currentStatus = data?.status || projectStore[projectId]?.status;
-                if (!stopStatus || currentStatus === stopStatus) {
+                const elapsed = Date.now() - startTime;
+
+                // Stop if we reached the target status OR if we see 'produced'/'directed' (terminal states)
+                const terminalStates = ['produced', 'directed', 'error', 'failed'];
+                const shouldStop = currentStatus === stopStatus || terminalStates.includes(currentStatus);
+
+                // Also stop if we've been polling for too long
+                if (shouldStop || elapsed > maxDuration) {
                     clearInterval(projectPollers[projectId]);
                     delete projectPollers[projectId];
                     const project = projectStore[projectId];
                     if (project) {
                         project.loadingAction = null;
                         renderProjects();
+                        if (elapsed > maxDuration) {
+                            addProjectEvent(projectId, '⚠️ Polling timeout - refresh the page to see the latest status');
+                        }
                     }
                 }
             }, 4000);
@@ -633,6 +725,44 @@
             player.src = audioPath;
             player.play();
         }
+
+        async function loadGlobalOutputs() {
+            try {
+                const res = await fetch('/outputs/tracks');
+                if (!res.ok) throw new Error('Unable to load outputs');
+                const data = await res.json();
+                // Flatten produced list for the home card
+                globalOutputs = data.produced || [];
+                renderGlobalOutputs();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function renderGlobalOutputs() {
+            const container = document.getElementById('global-outputs');
+            if (!container) return;
+            if (!globalOutputs.length) {
+                container.innerHTML = '<div style="display:flex; justify-content:space-between; align-items:center;"><h3 style="margin-top:0;">Recent renders</h3><a href="/static/multitrack_player.html" style="text-decoration:none; color:#2563eb;">Multi-Track Player ↗</a></div><p class="muted small">No renders found on disk.</p>';
+                return;
+            }
+            const items = globalOutputs.map(item => `
+                <div class="history-entry">
+                    <div>
+                        <div>${item.name}</div>
+                        <div class="muted small">${item.modified} · ${(item.size_kb || 0).toLocaleString()} KB</div>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button onclick="playAudio('${item.url}')" style="padding:4px 10px; font-size:0.85rem;">▶ Play</button>
+                        <a href="${item.url}" download style="padding:4px 10px; background:#10b981; color:#fff; border-radius:6px; text-decoration:none; font-size:0.85rem;">⬇ Download</a>
+                    </div>
+                </div>
+            `).join('');
+            container.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center;"><h3 style="margin-top:0;">Recent renders</h3><a href="/static/multitrack_player.html" style="text-decoration:none; color:#2563eb;">Multi-Track Player ↗</a></div><div class="list">${items}</div>`;
+        }
+
+        // Initial load
+        loadGlobalOutputs();
 
     </script>
 </body>
