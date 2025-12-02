@@ -11,14 +11,15 @@
 <body class="voice-page">
     <div class="page-shell">
         <header class="page-hero">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                <img src="/static/logo.png" alt="Audibound Studio" style="height: 40px;">
+            </div>
             <div>
-                <p class="muted" style="margin:0; letter-spacing:0.08em; text-transform:uppercase; font-size:0.8rem;">
-                    Library</p>
-                <h1>🧪 Cloning Lab</h1>
-                <p>Upload and curate expressive reference voices for cloning.</p>
+                <h1>🎙️ Voice & Cloning Lab</h1>
+                <p>Preview, update and curate expressive reference voices.</p>
             </div>
             <nav style="display:flex; gap:12px; flex-wrap:wrap;">
-                <a href="/">← Back to Projects</a>
+                <a href="/">← Back to Main Project Page</a>
                 <a href="/playground/sesame" style="color:#93c5fd;">Sesame Playground ↗</a>
                 <a href="/playground/dia" style="color:#f9a8d4;">Dia Playground ↗</a>
             </nav>
@@ -252,16 +253,22 @@
                     ? `${voice.duration_seconds.toFixed(1)}s`
                     : '';
                 const engineLabel = (voice.engine || '').toUpperCase();
+                const referenceUrl = voice.reference_file ? `/${voice.reference_file}` : null;
                 return `
                 <article class="voice-card">
                     <div class="voice-card__head">
-                        <div>
+                        <div style="flex:1;">
                             <p class="voice-card__name">${voice.name}</p>
                             <p class="voice-card__meta">${duration ? `${duration} · ` : ''}${created}</p>
                         </div>
                         <span class="badge">${engineLabel}</span>
                     </div>
                     ${(voice.tags && voice.tags.length) ? `<div class="tag-list">${voice.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</div>` : ''}
+                    ${referenceUrl ? `
+                        <div style="margin: 12px 0 8px 0;">
+                            <audio controls src="${referenceUrl}" style="width: 100%; height: 32px; border-radius: 6px;" preload="none"></audio>
+                        </div>
+                    ` : ''}
                     <div class="voice-card__actions">
                         <button class="primary-btn" style="flex:1;" onclick="testVoice('${voice.id}')">▶ Test</button>
                         <button class="secondary-btn" style="flex:0 0 auto; padding:10px 12px;" onclick="openEditPanel('${voice.id}')">✎</button>
@@ -412,7 +419,7 @@
             chunkQueue = [];
             if (currentSource) {
                 currentSource.onended = null;
-                try { currentSource.stop(); } catch (e) {}
+                try { currentSource.stop(); } catch (e) { }
                 currentSource.disconnect();
                 currentSource = null;
             }
