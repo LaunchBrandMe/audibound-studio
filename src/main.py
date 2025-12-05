@@ -792,7 +792,7 @@ async def kokoro_playground_generate(request: SesamePlaygroundRequest):
     try:
         audio_bytes = await provider.generate_audio(
             text=text,
-            voice_id="default",
+            voice_id=request.voice_id or "default",
             style=None,
             reference_audio_path=reference_path
         )
@@ -864,7 +864,7 @@ async def indextts2_playground_generate(request: SesamePlaygroundRequest):
     try:
         audio_bytes = await provider.generate_audio(
             text=text,
-            voice_id="default",
+            voice_id=request.voice_id or "default",
             style=None,
             reference_audio_path=reference_path
         )
