@@ -192,10 +192,144 @@
         .cost-neutral {
             color: var(--muted);
         }
+
+        /* Modern Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            color: var(--text);
+        }
+
+        .modal-subtitle {
+            color: var(--muted);
+            margin: 0 0 24px 0;
+            font-size: 0.9rem;
+        }
+
+        .modal-input-group {
+            margin-bottom: 24px;
+        }
+
+        .modal-input-group label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .modal-input-group input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 1.1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text);
+            transition: border-color 0.2s;
+        }
+
+        .modal-input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .modal-btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+        }
+
+        .modal-btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(168, 58, 250, 0.3);
+        }
+
+        .modal-btn-secondary {
+            background: var(--bg-alt);
+            color: var(--text);
+        }
+
+        .modal-btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 
 <body class="voice-page">
+    <!-- Edit Cost Modal -->
+    <div class="modal-overlay" id="editCostModal" onclick="if(event.target === this) closeEditModal()">
+        <div class="modal">
+            <h2 class="modal-title">Update Actual Cost</h2>
+            <p class="modal-subtitle" id="modalSubtitle">Enter the actual cost from Modal billing</p>
+
+            <div id="modalError" class="error-message" style="display:none;"></div>
+
+            <div class="modal-input-group">
+                <label for="actualCostInput">Actual Cost ($)</label>
+                <input type="number" id="actualCostInput" step="0.001" min="0" placeholder="0.000" autofocus>
+            </div>
+
+            <div class="modal-actions">
+                <button class="modal-btn modal-btn-secondary" onclick="closeEditModal()">Cancel</button>
+                <button class="modal-btn modal-btn-primary" onclick="saveActualCost()">Save</button>
+            </div>
+        </div>
+    </div>
+
     <div class="top-nav">
         <div class="top-nav-left">
             <a href="/" class="logo" style="display:flex;align-items:center;gap:4px;text-decoration:none;">
@@ -469,36 +603,89 @@
                         <td>${p.actual_cost !== null ? '$' + p.actual_cost.toFixed(3) : '-'}</td>
                         <td class="${diffClass}">${diff !== '-' ? (diff >= 0 ? '+' : '') + '$' + diff : '-'}</td>
                         <td>
-                            ${p.actual_cost === null ? `<button class="secondary-btn" style="padding:4px 8px;font-size:0.8rem;" onclick="updateActual('${p.id}')">Add Actual</button>` : ''}
+                            <button class="secondary-btn" style="padding:4px 8px;font-size:0.8rem;" onclick="updateActual('${p.id}', ${p.actual_cost})">
+                                ${p.actual_cost === null ? 'Add Actual' : 'Edit'}
+                            </button>
                         </td>
                     </tr>
                 `;
             }).join('');
         }
 
-        async function updateActual(productionId) {
-            const actual = prompt('Enter actual cost from Modal ($):');
-            if (!actual) return;
+        let currentEditingProductionId = null;
 
-            const cost = parseFloat(actual);
-            if (isNaN(cost)) {
-                alert('Invalid cost');
+        function updateActual(productionId, currentActual = null) {
+            currentEditingProductionId = productionId;
+
+            // Update modal content
+            const subtitle = currentActual !== null
+                ? `Current cost: $${currentActual.toFixed(3)}`
+                : 'No actual cost entered yet';
+            document.getElementById('modalSubtitle').textContent = subtitle;
+
+            // Pre-fill input
+            const input = document.getElementById('actualCostInput');
+            input.value = currentActual !== null ? currentActual.toFixed(3) : '';
+
+            // Clear any previous errors
+            document.getElementById('modalError').style.display = 'none';
+
+            // Show modal
+            document.getElementById('editCostModal').classList.add('active');
+
+            // Focus input after a brief delay (for modal animation)
+            setTimeout(() => input.focus(), 100);
+        }
+
+        function closeEditModal() {
+            document.getElementById('editCostModal').classList.remove('active');
+            currentEditingProductionId = null;
+        }
+
+        async function saveActualCost() {
+            const input = document.getElementById('actualCostInput');
+            const cost = parseFloat(input.value);
+            const errorEl = document.getElementById('modalError');
+
+            // Validation
+            if (!input.value || input.value.trim() === '') {
+                errorEl.textContent = 'Please enter a cost value';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            if (isNaN(cost) || cost < 0) {
+                errorEl.textContent = 'Please enter a valid positive number';
+                errorEl.style.display = 'block';
                 return;
             }
 
             try {
-                await fetch(`${API_URL}/api/cost-tracking/${productionId}/actual-cost`, {
+                const response = await fetch(`${API_URL}/api/cost-tracking/${currentEditingProductionId}/actual-cost`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ actual_cost: cost, notes: '' })
                 });
 
-                loadCostData(); // Reload
+                if (!response.ok) {
+                    throw new Error('Failed to update cost');
+                }
+
+                closeEditModal();
+                loadCostData(); // Reload data
             } catch (err) {
-                alert('Error updating cost');
-                console.error(err);
+                console.error('Error updating cost:', err);
+                errorEl.textContent = 'Failed to update cost. Please try again.';
+                errorEl.style.display = 'block';
             }
         }
+
+        // Allow Enter key to save
+        document.getElementById('actualCostInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                saveActualCost();
+            }
+        });
 
         // Load data on page load
         loadCostData();

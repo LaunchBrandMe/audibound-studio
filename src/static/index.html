@@ -628,7 +628,8 @@
             </div>
         </div>
         <div class="top-nav-actions">
-            <button onclick="createProject()">+ New Project</button>
+            <button id="new-project-btn" onclick="startNewProject()">+ New Project</button>
+            <button id="save-project-btn" onclick="createProject()" style="display: none;">Save Project</button>
             <button class="dark-mode-toggle" onclick="toggleDarkMode()" title="Toggle dark mode">🌙</button>
             <a href="/static/multitrack_player.html"
                 style="text-decoration: none; color: var(--text-secondary); font-size: 0.95rem; display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 8px; transition: all 0.2s ease;">
@@ -857,6 +858,31 @@ Paste your story here..."></textarea>
             document.getElementById('control-panel').style.display = 'none';
         }
 
+        function startNewProject() {
+            // Deselect current project
+            currentOpenProject = null;
+
+            // Clear the editor
+            const editor = document.getElementById('script-editor');
+            editor.value = '';
+            editor.dispatchEvent(new Event('input')); // Update stats
+
+            // Close control panel if open
+            closeControlPanel();
+
+            // Update project list to remove active state
+            renderProjects();
+
+            // Toggle buttons: hide "New Project", show "Save Project"
+            document.getElementById('new-project-btn').style.display = 'none';
+            document.getElementById('save-project-btn').style.display = 'block';
+
+            // Focus the editor
+            editor.focus();
+
+            showFlash('Enter your script content, then click "Save Project"', 'info');
+        }
+
         function renderScriptContent(project) {
             const scriptText = project.raw_text || '';
             return `
@@ -874,7 +900,7 @@ Paste your story here..."></textarea>
                     <strong>Quality Score: ${validation.score}/100</strong>
                     ${validation.issues && validation.issues.length ? `<div class="issues"><strong>Issues:</strong><ul>${validation.issues.map(i => `<li>${i}</li>`).join('')}</ul></div>` : ''}
                     ${validation.warnings && validation.warnings.length ? `<div class="issues"><strong>Warnings:</strong><ul>${validation.warnings.map(i => `<li>${i}</li>`).join('')}</ul></div>` : ''}
-                    ${validation.clarifications && validation.clarifications.length ? `<div class="issues"><strong>Needs clarification (click to copy):</strong><ul>${validation.clarifications.map((c, idx) => `<li><button style="padding:4px 8px; margin-right:6px; background:#e0e7ff; color:#1d4ed8; border:none; border-radius:6px; cursor:pointer;" onclick="copyText('${project.project_id}', ${idx})">Copy</button> [Block ${c.block_index}] ${c.reason}: "${c.text.replace(/"/g, '&quot;')}"</li>`).join('')}</ul></div>` : ''}
+                    ${validation.clarifications && validation.clarifications.length ? `<div class="issues"><strong>Needs clarification (click to copy):</strong><ul>${validation.clarifications.map((c, idx) => `<li><button style="padding:4px 8px; margin-right:6px; background:#e0e7ff; color:#1d4ed8; border:none; border-radius:6px; cursor:pointer;" onclick="copyText('${project.project_id}', ${idx})">Copy</button> [Line ${c.block_index + 1}] ${c.reason}: "${c.text.replace(/"/g, '&quot;')}"</li>`).join('')}</ul></div>` : ''}
                 </div>`
                 : '<p class="muted">Run Direct Script to generate the character breakdown and quality score.</p>';
 
@@ -1038,6 +1064,11 @@ Paste your story here..."></textarea>
                 ensureProjectEntry(data);
                 renderProjects();
                 showFlash('Project created. Run Direct Script to generate direction data.', 'success');
+
+                // Toggle buttons back: show "New Project", hide "Save Project"
+                document.getElementById('new-project-btn').style.display = 'block';
+                document.getElementById('save-project-btn').style.display = 'none';
+
                 // Open the newly created project
                 openProject(data.project_id);
             } catch (err) {
@@ -1156,7 +1187,8 @@ Paste your story here..."></textarea>
 
             // Extract engines from character assignments
             const enginesUsed = {};
-            if (project.characters) {
+            if (project && project.characters && project.characters.length > 0) {
+                // Calculate based on actual character assignments
                 project.characters.forEach(char => {
                     const voice = char.override_voice || char.default_voice || '';
                     const charEngine = voice.split(':')[0] || 'kokoro';
@@ -1164,6 +1196,14 @@ Paste your story here..."></textarea>
                 });
             } else {
                 enginesUsed['Default'] = engine.replace('_multi', '').replace('_single', '');
+            }
+
+            // Add SFX and Music engines if those layers are included
+            if (opts.include_sfx) {
+                enginesUsed['SFX Layer'] = 'audiogen';
+            }
+            if (opts.include_music) {
+                enginesUsed['Music Layer'] = 'musicgen';
             }
 
             // Calculate estimated cost using same logic as cost estimator
@@ -1242,7 +1282,7 @@ Paste your story here..."></textarea>
             if (projectPollers[projectId]) clearInterval(projectPollers[projectId]);
 
             const startTime = Date.now();
-            const maxDuration = 5 * 60 * 1000; // 5 minutes
+            const maxDuration = 15 * 60 * 1000; // 15 minutes (for long productions with IndexTTS2/music)
 
             projectPollers[projectId] = setInterval(async () => {
                 const data = await loadProject(projectId, { silent: true });
@@ -1490,9 +1530,25 @@ Paste your story here..."></textarea>
                 // No project or characters - show range from cheapest to most expensive
                 minCost = COST_RATES.kokoro.min * chars_in_thousands;
                 maxCost = COST_RATES.dia.max * chars_in_thousands;
-                breakdown.push({ engine: "Best case (Kokoro)", min: minCost, max: minCost });
-                breakdown.push({ engine: "Worst case (DiaTTS)", min: maxCost, max: maxCost });
+                breakdown.push({ engine: "Voice (Best case - Kokoro)", min: minCost, max: minCost });
+                breakdown.push({ engine: "Voice (Worst case - DiaTTS)", min: maxCost, max: maxCost });
             }
+
+            // Add SFX and Music estimates (based on ~200 words/min, assuming 1 block per 500 words)
+            const estimatedMinutes = Math.max(1, Math.ceil(charCount / 1200)); // ~200 chars per minute
+            const estimatedBlocks = Math.max(1, Math.ceil(charCount / 3000)); // ~1 block per 500 words (~3000 chars)
+
+            const sfxMin = COST_RATES.sfx.min * estimatedBlocks;
+            const sfxMax = COST_RATES.sfx.max * estimatedBlocks;
+            const musicMin = COST_RATES.music.min * estimatedMinutes;
+            const musicMax = COST_RATES.music.max * estimatedMinutes;
+
+            breakdown.push({ engine: "SFX", min: sfxMin, max: sfxMax });
+            breakdown.push({ engine: "Music", min: musicMin, max: musicMax });
+
+            // Add to total
+            minCost += sfxMin + musicMin;
+            maxCost += sfxMax + musicMax;
 
             return { min: minCost, max: maxCost, breakdown };
         }
@@ -1543,6 +1599,7 @@ Paste your story here..."></textarea>
                     : `$${item.min.toFixed(3)} - $${item.max.toFixed(3)}`;
                 breakdownHTML += `<div>• ${item.engine}: ${itemCost}</div>`;
             });
+            breakdownHTML += `<div style="margin-top:8px; padding-top:8px; border-top:1px solid var(--border); font-weight:600;">• Total: $${cost.min.toFixed(3)} - $${cost.max.toFixed(3)}</div>`;
             detailsEl.innerHTML = breakdownHTML;
 
             // Console log for tracking
@@ -1559,7 +1616,19 @@ Paste your story here..."></textarea>
 
         // Auto-save function
         const autoSave = debounce(async () => {
-            if (!currentOpenProject) return;
+            // Only auto-save if a project is currently selected
+            if (!currentOpenProject) {
+                // If no project is selected and editor has content, show "Save Project" button
+                const editor = document.getElementById('script-editor');
+                if (editor.value.trim()) {
+                    document.getElementById('new-project-btn').style.display = 'none';
+                    document.getElementById('save-project-btn').style.display = 'block';
+                } else {
+                    document.getElementById('new-project-btn').style.display = 'block';
+                    document.getElementById('save-project-btn').style.display = 'none';
+                }
+                return;
+            }
 
             const editor = document.getElementById('script-editor');
             const fullText = editor.value; // Keep newlines
