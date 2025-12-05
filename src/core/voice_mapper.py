@@ -11,20 +11,20 @@ class VoiceMapper:
     # Available Kokoro voices (from Kokoro-ONNX documentation)
     KOKORO_VOICES = {
         # American Female voices
-        "kokoro:af_sarah": "Young, energetic American female",
-        "kokoro:af_bella": "Warm, mature American female",
-        "kokoro:af_nicole": "Neutral, professional American female",
-        "kokoro:af_sky": "Bright, enthusiastic American female",
+        "kokoro:af_sarah": "Sarah - Young, energetic American female",
+        "kokoro:af_bella": "Bella - Warm, mature American female",
+        "kokoro:af_nicole": "Nicole - Neutral, professional American female",
+        "kokoro:af_sky": "Sky - Bright, enthusiastic American female",
         
         # American Male voices
-        "kokoro:am_adam": "Mature, authoritative American male",
-        "kokoro:am_michael": "Strong, confident American male",
+        "kokoro:am_adam": "Adam - Mature, authoritative American male",
+        "kokoro:am_michael": "Michael - Strong, confident American male",
         
         # British voices
-        "kokoro:bf_emma": "Refined British female",
-        "kokoro:bf_isabella": "Elegant British female",
-        "kokoro:bm_george": "Distinguished British male",
-        "kokoro:bm_lewis": "Warm British male",
+        "kokoro:bf_emma": "Emma - Refined British female",
+        "kokoro:bf_isabella": "Isabella - Elegant British female",
+        "kokoro:bm_george": "George - Distinguished British male",
+        "kokoro:bm_lewis": "Lewis - Warm British male",
     }
     
     @classmethod
@@ -65,12 +65,31 @@ class VoiceMapper:
             from src.core.voice_library import get_voice_library
             voice_lib = get_voice_library()
             for voice in voice_lib.get_all_voices():
+                # Skip invisible voices (they won't appear in Studio dropdowns)
+                if not voice.get('visible', True):
+                    continue
+                    
                 engine = (voice.get('engine') or 'styletts2').lower()
                 custom_id = voice.get('id')
                 if not custom_id:
                     continue
                 key = f"{engine}:custom_{custom_id}"
-                label = voice.get('name') or 'Uploaded Voice'
+                
+                # Format the label cleanly: "Name - Tags Gender (Engine)"
+                name = voice.get('name') or 'Uploaded Voice'
+                tags = voice.get('tags', [])
+                gender = voice.get('gender') or ''
+                
+                # Build clean display string with engine name
+                tag_str = ', '.join(tags) if isinstance(tags, list) and tags else ''
+                details = ' '.join(filter(None, [tag_str, gender]))
+                engine_name = engine.upper()
+                
+                if details:
+                    label = f"{name} - {details} ({engine_name})"
+                else:
+                    label = f"{name} ({engine_name})"
+                
                 all_voices[key] = label
         except ImportError:
             pass

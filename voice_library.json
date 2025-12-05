@@ -13,7 +13,10 @@
       "created_at": "2025-11-28T00:14:50.706250Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "bio": "",
+      "gender": "male",
+      "visible": true
     },
     {
       "id": "197f76e8-b823-497e-9ddd-f17f563a1dd8",
@@ -28,11 +31,14 @@
       "created_at": "2025-11-28T00:56:33.567999Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "bio": "",
+      "gender": "male",
+      "visible": false
     },
     {
       "id": "be15ab67-12e3-4239-a399-bfd983955521",
-      "name": "George",
+      "name": "Joey",
       "engine": "styletts2",
       "reference_file": "references/custom_uploads/be15ab67-12e3-4239-a399-bfd983955521.wav",
       "tags": [
@@ -44,7 +50,10 @@
       "created_at": "2025-11-28T04:05:22.831720Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "bio": "",
+      "gender": "male",
+      "visible": true
     },
     {
       "id": "f88ade13-9bb6-40ac-9e94-fc20deaef68f",
@@ -60,7 +69,10 @@
       "created_at": "2025-11-28T05:07:04.900272Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "bio": "",
+      "gender": "female",
+      "visible": true
     },
     {
       "id": "fea71330-137c-4247-8bde-de8510dd9531",
@@ -75,7 +87,10 @@
       "created_at": "2025-11-28T05:38:16.136398Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "bio": "",
+      "gender": "female",
+      "visible": true
     },
     {
       "id": "0cfdbfd4-1a02-4906-85d8-ff63eef681b5",
@@ -90,7 +105,10 @@
       "created_at": "2025-11-28T05:41:14.328757Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "bio": "",
+      "gender": "female",
+      "visible": true
     },
     {
       "id": "bdde5d97-d3ef-4a45-8be7-5131fcfcc410",
@@ -105,7 +123,10 @@
       "created_at": "2025-11-28T05:51:07.016363Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "bio": "",
+      "gender": "female",
+      "visible": true
     },
     {
       "id": "aff38e60-72e3-49ea-9745-c3945cba2844",
@@ -120,7 +141,10 @@
       "created_at": "2025-11-28T05:54:55.344261Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "bio": "",
+      "gender": "female",
+      "visible": true
     },
     {
       "id": "6c5332ab-dce7-4301-88f0-a2e902a0daa8",
@@ -135,7 +159,10 @@
       "created_at": "2025-11-28T06:00:26.621046Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "bio": "",
+      "gender": "female",
+      "visible": true
     },
     {
       "id": "0ef25883-352f-4acb-bb91-a259cd3e2b86",
@@ -150,7 +177,10 @@
       "created_at": "2025-11-28T06:04:17.925002Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "bio": "",
+      "gender": "male",
+      "visible": true
     },
     {
       "id": "9ee21cf7-1979-4126-b5a0-d9df2c09a4e7",
@@ -160,12 +190,16 @@
       "tags": [
         "Boy",
         "American",
-        "conversational"
+        "conversational",
+        "Child"
       ],
       "created_at": "2025-11-28T06:10:42.583785Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "bio": "",
+      "gender": "male",
+      "visible": true
     },
     {
       "id": "1de3c4ba-38fd-4dae-af24-df68b8ade5c6",
@@ -180,7 +214,10 @@
       "created_at": "2025-11-28T06:15:25.999056Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "bio": "",
+      "gender": "male",
+      "visible": true
     },
     {
       "id": "74ff618b-5cbc-4bbf-bffa-cda384ffa09b",
@@ -195,7 +232,10 @@
       "created_at": "2025-11-28T06:20:04.578927Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "bio": "",
+      "gender": "female",
+      "visible": true
     },
     {
       "id": "91d71252-4f92-4543-8050-d19872c72827",
@@ -205,12 +245,16 @@
       "tags": [
         "Female",
         "British",
-        "Story teller"
+        "Story teller",
+        "Older"
       ],
       "created_at": "2025-11-28T06:26:11.625171Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "bio": "",
+      "gender": "female",
+      "visible": true
     },
     {
       "id": "81d3a2d1-bd4d-4e91-aac4-4179e698bfee",
@@ -225,7 +269,10 @@
       "created_at": "2025-11-28T06:30:15.204390Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "bio": "",
+      "gender": "male",
+      "visible": true
     },
     {
       "id": "bf8d176c-7e89-4f05-98c5-6377b759fabb",
@@ -240,7 +287,10 @@
       "created_at": "2025-11-28T06:37:01.222765Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "bio": "",
+      "gender": "male",
+      "visible": true
     },
     {
       "id": "a5495e45-2c9e-4427-a79c-0544bba1b5f2",
@@ -255,7 +305,10 @@
       "created_at": "2025-11-28T06:39:05.688264Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "bio": "",
+      "gender": "female",
+      "visible": true
     },
     {
       "id": "f83ca972-d335-44b1-b0b4-2c4b6168d59e",
@@ -271,7 +324,10 @@
       "created_at": "2025-11-28T06:43:27.017692Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "bio": "",
+      "gender": "female",
+      "visible": true
     },
     {
       "id": "32a40fac-3aef-4515-9871-4cf5ca83cc5f",
@@ -286,11 +342,14 @@
       "created_at": "2025-11-28T06:47:13.122368Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "bio": "",
+      "gender": "male",
+      "visible": true
     },
     {
       "id": "543c8cd8-be36-490b-9699-0b8c64c6763c",
-      "name": "Camile - Young energetic",
+      "name": "Camile",
       "engine": "indextts2",
       "reference_file": "references/custom_uploads/543c8cd8-be36-490b-9699-0b8c64c6763c.wav",
       "tags": [
@@ -301,7 +360,10 @@
       "created_at": "2025-11-28T06:50:47.833981Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "bio": "",
+      "gender": "female",
+      "visible": true
     },
     {
       "id": "23042d3b-ffd8-4c61-933c-ad3bb083e2c6",
@@ -318,7 +380,10 @@
       "created_at": "2025-11-28T06:56:29.740016Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "bio": "",
+      "gender": "female",
+      "visible": true
     },
     {
       "id": "2c974341-1a93-4505-83b2-88a2c35c40d7",
@@ -333,7 +398,10 @@
       "created_at": "2025-11-28T07:00:22.507046Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "bio": "",
+      "gender": "male",
+      "visible": true
     },
     {
       "id": "de33e45a-6246-46d5-8f60-6a3bcd71c188",
@@ -348,11 +416,14 @@
       "created_at": "2025-11-28T07:03:36.768958Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "bio": "",
+      "gender": "male",
+      "visible": true
     },
     {
       "id": "ea43ea2e-3c00-4809-b6d4-eeb26cc5e59a",
-      "name": "Anastatia -Young, Energertic",
+      "name": "Anastatia",
       "engine": "indextts2",
       "reference_file": "references/custom_uploads/ea43ea2e-3c00-4809-b6d4-eeb26cc5e59a.wav",
       "tags": [
@@ -364,7 +435,10 @@
       "created_at": "2025-11-28T07:07:28.139892Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "bio": "",
+      "gender": "female",
+      "visible": true
     },
     {
       "id": "b3cf6fd6-9b10-4fab-9b9c-3392f8ea7ef5",
@@ -379,7 +453,10 @@
       "created_at": "2025-11-28T07:11:44.808779Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "bio": "",
+      "gender": "female",
+      "visible": true
     },
     {
       "id": "87283b73-7a7f-4bce-9dee-a51ace197c92",
@@ -394,7 +471,10 @@
       "created_at": "2025-11-28T07:17:40.229454Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "visible": true,
+      "bio": "",
+      "gender": "female"
     },
     {
       "id": "71b18db5-50f2-4364-b9bf-96a83432ab60",
@@ -408,7 +488,10 @@
       "created_at": "2025-11-28T07:22:17.594820Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "visible": true,
+      "bio": "",
+      "gender": "female"
     },
     {
       "id": "f45b4cea-1c43-4766-b12b-dc89337a1253",
@@ -423,7 +506,10 @@
       "created_at": "2025-11-28T07:28:44.491991Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "visible": true,
+      "bio": "",
+      "gender": "female"
     },
     {
       "id": "0a1bfc32-6ab9-4312-869b-917121ff90b3",
@@ -438,7 +524,10 @@
       "created_at": "2025-11-28T07:32:17.200696Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "visible": true,
+      "bio": "",
+      "gender": "male"
     },
     {
       "id": "ab805cf2-0fa6-49c6-a22b-c30b6978e4a1",
@@ -453,7 +542,10 @@
       "created_at": "2025-11-28T13:03:11.057464Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "visible": true,
+      "bio": "",
+      "gender": "male"
     },
     {
       "id": "43dced91-e5d6-4b8b-a299-a4c97004a2a7",
@@ -468,7 +560,10 @@
       "created_at": "2025-11-28T13:13:33.996765Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "visible": true,
+      "bio": "",
+      "gender": "female"
     },
     {
       "id": "7cb09225-91d3-4e06-9485-cb082d39296e",
@@ -483,7 +578,383 @@
       "created_at": "2025-11-28T17:22:24.360727Z",
       "sample_rate": 24000,
       "duration_seconds": 0,
-      "metadata": {}
+      "metadata": {},
+      "visible": true,
+      "bio": "",
+      "gender": "male"
+    },
+    {
+      "id": "51680f48-1e7d-4b46-a942-c1bc782ea24d",
+      "name": "StyleTTS2 Default",
+      "engine": "styletts2",
+      "reference_file": "references/custom_uploads/51680f48-1e7d-4b46-a942-c1bc782ea24d.wav",
+      "tags": [
+        "expressive",
+        "versatile"
+      ],
+      "created_at": "2025-12-02T19:22:34.797030Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {
+        "is_default": true,
+        "default_voice_id": "default"
+      },
+      "bio": "Highly expressive with style control",
+      "gender": "neutral",
+      "profile_image": null,
+      "visible": true
+    },
+    {
+      "id": "bfe9c90b-bbdd-44d5-a35d-59c126a25902",
+      "name": "Sesame Default",
+      "engine": "sesame",
+      "reference_file": "references/custom_uploads/bfe9c90b-bbdd-44d5-a35d-59c126a25902.wav",
+      "tags": [
+        "expressive",
+        "neutral"
+      ],
+      "created_at": "2025-12-02T19:22:34.797526Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {
+        "is_default": true,
+        "default_voice_id": "default"
+      },
+      "bio": "Expressive neutral voice",
+      "gender": "neutral",
+      "profile_image": null,
+      "visible": false
+    },
+    {
+      "id": "11c8c414-a067-4104-9a0b-b0617c3aee2e",
+      "name": "IndexTTS2 Default",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/11c8c414-a067-4104-9a0b-b0617c3aee2e.wav",
+      "tags": [
+        "emotional",
+        "versatile"
+      ],
+      "created_at": "2025-12-02T19:22:34.797997Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {
+        "is_default": true,
+        "default_voice_id": "default"
+      },
+      "bio": "Emotion vector control (8 emotions)",
+      "gender": "neutral",
+      "profile_image": null,
+      "visible": true
+    },
+    {
+      "id": "5b7c90ef-759a-4dd0-bd2e-16ee7c7ca5fc",
+      "name": "Dia Default",
+      "engine": "dia",
+      "reference_file": "references/custom_uploads/5b7c90ef-759a-4dd0-bd2e-16ee7c7ca5fc.wav",
+      "tags": [
+        "expressive",
+        "multi-speaker"
+      ],
+      "created_at": "2025-12-02T19:22:34.798463Z",
+      "sample_rate": 24000,
+      "duration_seconds": 0,
+      "metadata": {
+        "is_default": true,
+        "default_voice_id": "default"
+      },
+      "bio": "Expressive multi-speaker",
+      "gender": "neutral",
+      "profile_image": null,
+      "visible": false
+    },
+    {
+      "id": "1f38242e-5acb-469e-a385-2e2b9ea39e85",
+      "name": "Sarah",
+      "engine": "kokoro",
+      "reference_file": "references/custom_uploads/1f38242e-5acb-469e-a385-2e2b9ea39e85.wav",
+      "tags": [
+        "american",
+        "female",
+        "young",
+        "energetic"
+      ],
+      "created_at": "2025-12-02T19:43:34.651369Z",
+      "sample_rate": 24000,
+      "duration_seconds": 1.66,
+      "metadata": {
+        "is_default": true,
+        "original_id": "af_sarah"
+      },
+      "bio": "Young, energetic American female",
+      "gender": "female",
+      "profile_image": null,
+      "visible": true
+    },
+    {
+      "id": "b12c3969-1f5f-4af7-a9ab-383dbc16ed26",
+      "name": "Bella",
+      "engine": "kokoro",
+      "reference_file": "references/custom_uploads/b12c3969-1f5f-4af7-a9ab-383dbc16ed26.wav",
+      "tags": [
+        "american",
+        "female",
+        "mature",
+        "warm"
+      ],
+      "created_at": "2025-12-02T19:43:36.945088Z",
+      "sample_rate": 24000,
+      "duration_seconds": 1.54,
+      "metadata": {
+        "is_default": true,
+        "original_id": "af_bella"
+      },
+      "bio": "Warm, mature American female",
+      "gender": "female",
+      "profile_image": null,
+      "visible": true
+    },
+    {
+      "id": "a2e86258-f1d2-4a49-ad60-4263c02fb1df",
+      "name": "Nicole",
+      "engine": "kokoro",
+      "reference_file": "references/custom_uploads/a2e86258-f1d2-4a49-ad60-4263c02fb1df.wav",
+      "tags": [
+        "american",
+        "female",
+        "professional",
+        "neutral"
+      ],
+      "created_at": "2025-12-02T19:43:39.457615Z",
+      "sample_rate": 24000,
+      "duration_seconds": 2.5,
+      "metadata": {
+        "is_default": true,
+        "original_id": "af_nicole"
+      },
+      "bio": "Neutral, professional American female",
+      "gender": "female",
+      "profile_image": null,
+      "visible": true
+    },
+    {
+      "id": "63a22839-f760-48c1-b57e-8cbc4c0410e8",
+      "name": "Sky",
+      "engine": "kokoro",
+      "reference_file": "references/custom_uploads/63a22839-f760-48c1-b57e-8cbc4c0410e8.wav",
+      "tags": [
+        "american",
+        "female",
+        "bright",
+        "enthusiastic"
+      ],
+      "created_at": "2025-12-02T19:43:41.739917Z",
+      "sample_rate": 24000,
+      "duration_seconds": 2.01,
+      "metadata": {
+        "is_default": true,
+        "original_id": "af_sky"
+      },
+      "bio": "Bright, enthusiastic American female",
+      "gender": "female",
+      "profile_image": null,
+      "visible": true
+    },
+    {
+      "id": "95e74461-ae63-4d6d-9e7b-337495dcb77a",
+      "name": "Adam",
+      "engine": "kokoro",
+      "reference_file": "references/custom_uploads/95e74461-ae63-4d6d-9e7b-337495dcb77a.wav",
+      "tags": [
+        "american",
+        "male",
+        "mature",
+        "authoritative"
+      ],
+      "created_at": "2025-12-02T19:43:44.025159Z",
+      "sample_rate": 24000,
+      "duration_seconds": 1.73,
+      "metadata": {
+        "is_default": true,
+        "original_id": "am_adam"
+      },
+      "bio": "Mature, authoritative American male",
+      "gender": "male",
+      "profile_image": null,
+      "visible": true
+    },
+    {
+      "id": "2460fd17-7ad5-4636-a7fa-bafd4671b305",
+      "name": "Michael",
+      "engine": "kokoro",
+      "reference_file": "references/custom_uploads/2460fd17-7ad5-4636-a7fa-bafd4671b305.wav",
+      "tags": [
+        "american",
+        "male",
+        "strong",
+        "confident"
+      ],
+      "created_at": "2025-12-02T19:43:46.294275Z",
+      "sample_rate": 24000,
+      "duration_seconds": 2.01,
+      "metadata": {
+        "is_default": true,
+        "original_id": "am_michael"
+      },
+      "bio": "Strong, confident American male",
+      "gender": "male",
+      "profile_image": null,
+      "visible": true
+    },
+    {
+      "id": "bfcb30b9-1073-4af5-a0b3-8f4d8d95048e",
+      "name": "Emma",
+      "engine": "kokoro",
+      "reference_file": "references/custom_uploads/bfcb30b9-1073-4af5-a0b3-8f4d8d95048e.wav",
+      "tags": [
+        "british",
+        "female",
+        "refined"
+      ],
+      "created_at": "2025-12-02T19:43:48.555374Z",
+      "sample_rate": 24000,
+      "duration_seconds": 1.83,
+      "metadata": {
+        "is_default": true,
+        "original_id": "bf_emma"
+      },
+      "bio": "Refined British female",
+      "gender": "female",
+      "profile_image": null,
+      "visible": true
+    },
+    {
+      "id": "6dec8334-04db-4bed-b607-3367d0ebca13",
+      "name": "Isabella",
+      "engine": "kokoro",
+      "reference_file": "references/custom_uploads/6dec8334-04db-4bed-b607-3367d0ebca13.wav",
+      "tags": [
+        "british",
+        "female",
+        "elegant"
+      ],
+      "created_at": "2025-12-02T19:43:50.986518Z",
+      "sample_rate": 24000,
+      "duration_seconds": 2.05,
+      "metadata": {
+        "is_default": true,
+        "original_id": "bf_isabella"
+      },
+      "bio": "Elegant British female",
+      "gender": "female",
+      "profile_image": null,
+      "visible": true
+    },
+    {
+      "id": "af4d3335-7b8a-4127-9b9a-f557960d9acf",
+      "name": "George",
+      "engine": "kokoro",
+      "reference_file": "references/custom_uploads/af4d3335-7b8a-4127-9b9a-f557960d9acf.wav",
+      "tags": [
+        "british",
+        "male",
+        "distinguished"
+      ],
+      "created_at": "2025-12-02T19:43:53.382971Z",
+      "sample_rate": 24000,
+      "duration_seconds": 2.37,
+      "metadata": {
+        "is_default": true,
+        "original_id": "bm_george"
+      },
+      "bio": "Distinguished British male",
+      "gender": "male",
+      "profile_image": null,
+      "visible": true
+    },
+    {
+      "id": "906c4de1-431d-4272-b933-83c122f349c4",
+      "name": "Lewis",
+      "engine": "kokoro",
+      "reference_file": "references/custom_uploads/906c4de1-431d-4272-b933-83c122f349c4.wav",
+      "tags": [
+        "british",
+        "male",
+        "warm"
+      ],
+      "created_at": "2025-12-02T19:43:55.867029Z",
+      "sample_rate": 24000,
+      "duration_seconds": 2.2,
+      "metadata": {
+        "is_default": true,
+        "original_id": "bm_lewis"
+      },
+      "bio": "Warm British male",
+      "gender": "male",
+      "profile_image": null,
+      "visible": true
+    },
+    {
+      "id": "c0d6a817-63aa-4033-85dd-0856dfa463df",
+      "name": "StyleTTS2 Default",
+      "engine": "styletts2",
+      "reference_file": "references/custom_uploads/c0d6a817-63aa-4033-85dd-0856dfa463df.wav",
+      "tags": [
+        "expressive",
+        "versatile"
+      ],
+      "created_at": "2025-12-02T19:44:48.726497Z",
+      "sample_rate": 24000,
+      "duration_seconds": 3.02,
+      "metadata": {
+        "is_default": true,
+        "original_id": "default"
+      },
+      "bio": "Highly expressive with style control",
+      "gender": "neutral",
+      "profile_image": null,
+      "visible": true
+    },
+    {
+      "id": "e9936b83-8d78-4c70-a69f-01744dd1de38",
+      "name": "IndexTTS2 Default",
+      "engine": "indextts2",
+      "reference_file": "references/custom_uploads/e9936b83-8d78-4c70-a69f-01744dd1de38.wav",
+      "tags": [
+        "emotional",
+        "versatile"
+      ],
+      "created_at": "2025-12-02T19:49:55.885771Z",
+      "sample_rate": 22050,
+      "duration_seconds": 2.17,
+      "metadata": {
+        "is_default": true,
+        "original_id": "default"
+      },
+      "bio": "Emotion vector control (8 emotions)",
+      "gender": "neutral",
+      "profile_image": null,
+      "visible": true
+    },
+    {
+      "id": "36825eff-b7a6-4d2b-9d04-9e95f09e71e4",
+      "name": "Dia Default",
+      "engine": "dia",
+      "reference_file": "references/custom_uploads/36825eff-b7a6-4d2b-9d04-9e95f09e71e4.wav",
+      "tags": [
+        "expressive",
+        "multi-speaker"
+      ],
+      "created_at": "2025-12-02T19:51:43.650419Z",
+      "sample_rate": 44100,
+      "duration_seconds": 31.92,
+      "metadata": {
+        "is_default": true,
+        "original_id": "default"
+      },
+      "bio": "Expressive multi-speaker",
+      "gender": "neutral",
+      "profile_image": null,
+      "visible": false
     }
   ]
 }

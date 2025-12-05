@@ -52,11 +52,14 @@ class VoiceLibrary:
         filename: str,
         engine: str = "styletts2",
         tags: Optional[List[str]] = None,
-        metadata: Optional[Dict] = None
+        metadata: Optional[Dict] = None,
+        bio: Optional[str] = None,
+        gender: Optional[str] = None,
+        profile_image: Optional[bytes] = None
     ) -> Dict:
         """
         Add a new voice to the library
-        
+
         Args:
             name: Human-readable name for the voice
             audio_bytes: Audio file bytes
@@ -64,7 +67,10 @@ class VoiceLibrary:
             engine: TTS engine (styletts2, sesame)
             tags: List of tags (female, male, british, etc.)
             metadata: Additional metadata
-        
+            bio: Voice profile bio/description
+            gender: Gender (male, female, neutral, other)
+            profile_image: Profile image bytes (optional)
+
         Returns:
             Voice entry dictionary
         """
@@ -92,7 +98,15 @@ class VoiceLibrary:
             print(f"Warning: Could not extract audio metadata: {e}")
             duration = 0
             sample_rate = 24000
-        
+
+        # Save profile image if provided
+        profile_image_path = None
+        if profile_image:
+            profile_image_filename = f"{voice_id}_profile.jpg"
+            profile_image_path = os.path.join(CUSTOM_UPLOADS_DIR, profile_image_filename)
+            with open(profile_image_path, 'wb') as f:
+                f.write(profile_image)
+
         # Create voice entry
         voice_entry = {
             'id': voice_id,
@@ -103,7 +117,11 @@ class VoiceLibrary:
             'created_at': datetime.utcnow().isoformat() + 'Z',
             'sample_rate': sample_rate,
             'duration_seconds': round(duration, 2),
-            'metadata': metadata or {}
+            'metadata': metadata or {},
+            'bio': bio or '',
+            'gender': gender or 'neutral',
+            'profile_image': profile_image_path,
+            'visible': True  # NEW: Default to visible in dropdowns
         }
         
         self.voices.append(voice_entry)
@@ -147,13 +165,13 @@ class VoiceLibrary:
         voice = self.get_voice(voice_id)
         if not voice:
             return None
-        
+
         # Update allowed fields
-        allowed_fields = ['name', 'tags', 'metadata', 'engine']
+        allowed_fields = ['name', 'tags', 'metadata', 'engine', 'bio', 'gender', 'visible']
         for field in allowed_fields:
             if field in updates:
                 voice[field] = updates[field]
-        
+
         self._save_library()
         print(f"[VoiceLibrary] Updated voice: {voice_id}")
         return voice

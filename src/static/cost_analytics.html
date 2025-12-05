@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cost Analytics - Audibound Studio</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Top Navigation Styles */
+        .top-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .top-nav-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .logo span {
+            margin-bottom: -7px;
+        }
+
+        .logo img {
+            height: 32px;
+        }
+
+        .top-nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .dark-mode-toggle,
+        .burger-menu {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s ease;
+            color: var(--text);
+        }
+
+        .dark-mode-toggle:hover,
+        .burger-menu:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 24px;
+            margin-top: 8px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            min-width: 220px;
+            z-index: 1000;
+        }
+
+        .menu-dropdown.active {
+            display: block;
+        }
+
+        .menu-dropdown a {
+            display: block;
+            padding: 12px 16px;
+            color: var(--text);
+            text-decoration: none;
+            transition: background 0.2s ease;
+            font-size: 0.95rem;
+        }
+
+        .menu-dropdown a:first-child {
+            border-radius: 12px 12px 0 0;
+        }
+
+        .menu-dropdown a:last-child {
+            border-radius: 0 0 12px 12px;
+        }
+
+        .menu-dropdown a:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .menu-dropdown a:not(:last-child) {
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            margin: 8px 0;
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .chart-container {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .table-container {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--bg-alt);
+            font-weight: 600;
+            color: var(--muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        tr:hover {
+            background: var(--bg-alt);
+        }
+
+        .cost-positive {
+            color: #10b981;
+        }
+
+        .cost-negative {
+            color: #ef4444;
+        }
+
+        .cost-neutral {
+            color: var(--muted);
+        }
+    </style>
+</head>
+
+<body class="voice-page">
+    <div class="top-nav">
+        <div class="top-nav-left">
+            <a href="/" class="logo" style="display:flex;align-items:center;gap:4px;text-decoration:none;">
+                <img src="/static/logo.png" alt="Audibound Studio" style="height:32px;">
+                <span style="margin-bottom:-7px;">Studio</span>
+            </a>
+        </div>
+        <div class="top-nav-actions">
+            <button class="dark-mode-toggle" onclick="toggleDarkMode()" title="Toggle dark mode">🌙</button>
+            <button class="burger-menu" onclick="toggleMenu()" title="Menu">☰</button>
+            <div id="menu-dropdown" class="menu-dropdown">
+                <a href="/">← Back to Projects</a>
+                <a href="/static/cost_analytics.html">💰 Cost Analytics</a>
+                <a href="/static/voices.html">🎙️ Voice & Cloning Lab</a>
+                <a href="/static/sfx_playground.html">🔊 SFX & Music</a>
+                <a href="/static/multitrack_player.html">▶ Multi-Track Player</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-shell">
+        <header style="margin-bottom: 32px;">
+            <h1 style="margin: 0; font-size: clamp(1.9rem, 2.5vw, 2.6rem);">💰 Cost Analytics</h1>
+            <p style="margin: 8px 0 0 0; color: var(--muted); font-size: 1.05rem;">Track estimated vs. actual production
+                costs</p>
+        </header>
+
+        <!-- Summary Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Productions</div>
+                <div class="stat-value" id="total-productions">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Estimated</div>
+                <div class="stat-value" id="total-estimated">$0.00</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Actual</div>
+                <div class="stat-value" id="total-actual">$0.00</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Average Accuracy</div>
+                <div class="stat-value" id="avg-accuracy">-</div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="chart-container">
+            <h3 style="margin: 0 0 16px 0;">Estimated vs. Actual Costs Over Time</h3>
+            <canvas id="cost-trend-chart"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <h3 style="margin: 0 0 16px 0;">Cost Breakdown by Engine</h3>
+            <canvas id="engine-pie-chart"></canvas>
+        </div>
+
+        <!-- Productions Table -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Project</th>
+                        <th>Characters</th>
+                        <th>Engines</th>
+                        <th>Estimated</th>
+                        <th>Actual</th>
+                        <th>Diff</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="productions-table">
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 40px; color: var(--muted);">
+                            No productions yet. Start producing audiobooks to see cost tracking!
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '';
+
+        // Dark mode
+        function toggleDarkMode() {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            localStorage.setItem('darkMode', isLight ? 'disabled' : 'enabled');
+            const toggle = document.querySelector('.dark-mode-toggle');
+            toggle.textContent = isLight ? '🌙' : '☀️';
+        }
+
+        function initDarkMode() {
+            const darkMode = localStorage.getItem('darkMode');
+            if (darkMode === 'disabled') {
+                document.body.classList.add('light-mode');
+                const toggle = document.querySelector('.dark-mode-toggle');
+                if (toggle) toggle.textContent = '🌙';
+            } else {
+                const toggle = document.querySelector('.dark-mode-toggle');
+                if (toggle) toggle.textContent = '☀️';
+            }
+        }
+
+        function toggleMenu() {
+            const menu = document.getElementById('menu-dropdown');
+            menu.classList.toggle('active');
+        }
+
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('menu-dropdown');
+            const burgerBtn = document.querySelector('.burger-menu');
+            if (menu && !menu.contains(e.target) && e.target !== burgerBtn) {
+                menu.classList.remove('active');
+            }
+        });
+
+        initDarkMode();
+
+        // Fetch and display cost tracking data
+        let trendChart, pieChart;
+
+        async function loadCostData() {
+            try {
+                const res = await fetch(`${API_URL}/api/cost-tracking`);
+                const data = await res.json();
+                const productions = data.productions || [];
+
+                // Update summary stats
+                document.getElementById('total-productions').textContent = productions.length;
+
+                const totalEstimated = productions.reduce((sum, p) => sum + (p.estimated_cost || 0), 0);
+                document.getElementById('total-estimated').textContent = `$${totalEstimated.toFixed(3)}`;
+
+                const withActual = productions.filter(p => p.actual_cost !== null);
+                const totalActual = withActual.reduce((sum, p) => sum + (p.actual_cost || 0), 0);
+                document.getElementById('total-actual').textContent = withActual.length > 0 ? `$${totalActual.toFixed(3)}` : '-';
+
+                // Calculate accuracy
+                if (withActual.length > 0) {
+                    const avgAccuracy = (totalEstimated / totalActual * 100).toFixed(1);
+                    document.getElementById('avg-accuracy').textContent = `${avgAccuracy}%`;
+                } else {
+                    document.getElementById('avg-accuracy').textContent = '-';
+                }
+
+                // Render charts
+                renderTrendChart(productions);
+                renderPieChart(productions);
+
+                // Render table
+                renderTable(productions);
+
+            } catch (err) {
+                console.error('Error loading cost data:', err);
+            }
+        }
+
+        function renderTrendChart(productions) {
+            const ctx = document.getElementById('cost-trend-chart').getContext('2d');
+
+            if (trendChart) trendChart.destroy();
+
+            const sorted = [...productions].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            const labels = sorted.map(p => new Date(p.timestamp).toLocaleDateString());
+            const estimated = sorted.map(p => p.estimated_cost);
+            const actual = sorted.map(p => p.actual_cost || null);
+
+            trendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Estimated Cost',
+                        data: estimated,
+                        borderColor: 'rgb(168, 58, 250)',
+                        backgroundColor: 'rgba(168, 58, 250, 0.1)',
+                        tension: 0.1
+                    }, {
+                        label: 'Actual Cost',
+                        data: actual,
+                        borderColor: 'rgb(16, 185, 129)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: true }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Cost ($)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderPieChart(productions) {
+            const ctx = document.getElementById('engine-pie-chart').getContext('2d');
+
+            if (pieChart) pieChart.destroy();
+
+            // Aggregate cost by engine
+            const engineCosts = {};
+            productions.forEach(p => {
+                Object.entries(p.engines_used || {}).forEach(([char, engine]) => {
+                    engineCosts[engine] = (engineCosts[engine] || 0) + (p.estimated_cost / Object.keys(p.engines_used).length);
+                });
+            });
+
+            const labels = Object.keys(engineCosts);
+            const data = Object.values(engineCosts);
+
+            pieChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels,
+                    datasets: [{
+                        data,
+                        backgroundColor: [
+                            'rgb(168, 58, 250)',
+                            'rgb(16, 185, 129)',
+                            'rgb(59, 130, 246)',
+                            'rgb(245, 158, 11)',
+                            'rgb(239, 68, 68)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'right' }
+                    }
+                }
+            });
+        }
+
+        function renderTable(productions) {
+            const tbody = document.getElementById('productions-table');
+
+            if (productions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px; color: var(--muted);">No productions yet. Start producing audiobooks to see cost tracking!</td></tr>';
+                return;
+            }
+
+            const sorted = [...productions].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            tbody.innerHTML = sorted.map(p => {
+                const date = new Date(p.timestamp).toLocaleDateString();
+                const engines = Object.values(p.engines_used || {}).join(', ');
+                const diff = p.actual_cost !== null ? (p.actual_cost - p.estimated_cost).toFixed(3) : '-';
+                const diffClass = p.actual_cost !== null
+                    ? (diff > 0 ? 'cost-negative' : diff < 0 ? 'cost-positive' : 'cost-neutral')
+                    : 'cost-neutral';
+
+                return `
+                    <tr>
+                        <td>${date}</td>
+                        <td>${p.project_title}</td>
+                        <td>${p.character_count}</td>
+                        <td>${engines}</td>
+                        <td>$${p.estimated_cost.toFixed(3)}</td>
+                        <td>${p.actual_cost !== null ? '$' + p.actual_cost.toFixed(3) : '-'}</td>
+                        <td class="${diffClass}">${diff !== '-' ? (diff >= 0 ? '+' : '') + '$' + diff : '-'}</td>
+                        <td>
+                            ${p.actual_cost === null ? `<button class="secondary-btn" style="padding:4px 8px;font-size:0.8rem;" onclick="updateActual('${p.id}')">Add Actual</button>` : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function updateActual(productionId) {
+            const actual = prompt('Enter actual cost from Modal ($):');
+            if (!actual) return;
+
+            const cost = parseFloat(actual);
+            if (isNaN(cost)) {
+                alert('Invalid cost');
+                return;
+            }
+
+            try {
+                await fetch(`${API_URL}/api/cost-tracking/${productionId}/actual-cost`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ actual_cost: cost, notes: '' })
+                });
+
+                loadCostData(); // Reload
+            } catch (err) {
+                alert('Error updating cost');
+                console.error(err);
+            }
+        }
+
+        // Load data on page load
+        loadCostData();
+    </script>
+</body>
+
+</html>

@@ -7,218 +7,598 @@
     <title>Studio · Multi-Track Player</title>
     <link rel="stylesheet" href="/static/styles.css">
     <style>
+        /* Dark Mode Support */
+        body.voice-page.light-mode {
+            --bg: #FFF7EC;
+            --bg-alt: #ffffff;
+            --card: #ffffff;
+            --border: #e5d4c1;
+            --border-strong: rgba(168, 58, 250, 0.4);
+            --text: #121A2F;
+            --muted: #5a6478;
+            --primary: #A83AFA;
+            --accent: #FF2FAD;
+            background: linear-gradient(to bottom, #FFF7EC, #ffffff);
+        }
+
+        .top-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .top-nav-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .logo span {
+            margin-bottom: -7px;
+        }
+
+        .logo img {
+            height: 32px;
+        }
+
+        .top-nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .dark-mode-toggle {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s ease;
+            color: var(--text);
+        }
+
+        .dark-mode-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .burger-menu {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s ease;
+            color: var(--text);
+        }
+
+        .burger-menu:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 24px;
+            margin-top: 8px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            min-width: 220px;
+            z-index: 1000;
+        }
+
+        .menu-dropdown.active {
+            display: block;
+        }
+
+        .menu-dropdown a {
+            display: block;
+            padding: 12px 16px;
+            color: var(--text);
+            text-decoration: none;
+            transition: background 0.2s ease;
+            font-size: 0.95rem;
+        }
+
+        .menu-dropdown a:first-child {
+            border-radius: 12px 12px 0 0;
+        }
+
+        .menu-dropdown a:last-child {
+            border-radius: 0 0 12px 12px;
+        }
+
+        .menu-dropdown a:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .menu-dropdown a:not(:last-child) {
+            border-bottom: 1px solid var(--border);
+        }
+
         .player-grid {
             display: grid;
-            grid-template-columns: 300px 1fr;
-            gap: 24px;
-            height: calc(100vh - 100px);
+            grid-template-columns: 1fr;
+            gap: 0;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .player-container {
+            background: var(--card);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            max-height: calc(100vh - 140px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .player-header {
+            background: linear-gradient(135deg,
+                    #FF2FAD 0%,
+                    #A83AFA 12%,
+                    #6C22FA 24%,
+                    #FF8F3D 36%,
+                    #FFD346 48%,
+                    #FF2FAD 60%,
+                    #A83AFA 72%,
+                    #6C22FA 84%,
+                    #FF8F3D 96%,
+                    #FFD346 100%);
+            background-size: 400% 400%;
+            background-position: 0% 0%;
+            padding: 24px 32px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+            transition: background-position 0.05s linear;
+        }
+
+        .player-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: white;
+            margin: 0 0 6px 0;
+            letter-spacing: -0.02em;
+        }
+
+        .player-subtitle {
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin: 0;
+        }
+
+        .player-body {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            flex: 1;
+            overflow: hidden;
         }
 
         .sidebar {
-            background: #fff;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
+            background: var(--bg-alt);
+            border-right: 1px solid var(--border);
             overflow-y: auto;
-            padding: 16px;
+            padding: 24px;
+        }
+
+        .sidebar-header {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+            margin: 0 0 16px 0;
         }
 
         .story-item {
-            padding: 12px;
-            border-radius: 8px;
+            padding: 14px 16px;
+            border-radius: 10px;
             cursor: pointer;
-            transition: background 0.2s;
-            border-bottom: 1px solid #f1f5f9;
-            color: #111827;
+            transition: all 0.2s ease;
+            margin-bottom: 8px;
+            border: 1px solid transparent;
+            background: var(--card);
         }
 
         .story-item:hover {
-            background: #f8fafc;
+            background: rgba(37, 99, 235, 0.05);
+            border-color: rgba(37, 99, 235, 0.2);
+            transform: translateX(2px);
         }
 
         .story-item.active {
-            background: #eff6ff;
-            border-left: 3px solid #2563eb;
+            background: linear-gradient(135deg, rgba(168, 58, 250, 0.15) 0%, rgba(168, 58, 250, 0.08) 100%);
+            border-color: var(--primary);
+            border-left-width: 3px;
+        }
+
+        .story-item-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .story-item-date {
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .story-item-badges {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .story-badge {
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .story-badge-voice {
+            background: rgba(168, 58, 250, 0.15);
+            color: var(--primary);
+        }
+
+        .story-badge-sfx {
+            background: rgba(255, 143, 61, 0.15);
+            color: var(--accent-orange);
+        }
+
+        .story-badge-music {
+            background: rgba(255, 47, 173, 0.15);
+            color: var(--accent);
         }
 
         .mixer-panel {
-            background: #fff;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            padding: 32px;
+            padding: 32px 40px;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
         }
 
         .track-strip {
             display: flex;
             align-items: center;
             width: 100%;
-            max-width: 600px;
-            background: #f8fafc;
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            border: 1px solid #e2e8f0;
+            max-width: 900px;
+            background: var(--bg-alt);
+            padding: 14px 20px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .track-strip:hover {
+            border-color: rgba(37, 99, 235, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
 
         .track-icon {
             width: 40px;
             height: 40px;
-            background: #e2e8f0;
-            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.08));
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 16px;
-            font-size: 1.2rem;
+            margin-right: 14px;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            color: white;
+        }
+
+        .track-icon.voice {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.85), rgba(37, 99, 235, 0.75));
+        }
+
+        .track-icon.sfx {
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.85), rgba(234, 88, 12, 0.75));
+        }
+
+        .track-icon.music {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.85), rgba(147, 51, 234, 0.75));
         }
 
         .track-info {
             flex: 1;
+            min-width: 0;
         }
 
         .track-name {
             font-weight: 600;
             font-size: 0.95rem;
+            color: var(--text);
+            letter-spacing: -0.01em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .track-status {
-            font-size: 0.8rem;
-            color: #64748b;
+            display: none;
         }
 
         .track-controls {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 20px;
         }
 
-        .mute-btn {
-            background: #fff;
-            border: 1px solid #cbd5e1;
-            color: #64748b;
-            width: 36px;
-            height: 36px;
-            border-radius: 6px;
+        .layer-toggle {
+            position: relative;
+            width: 52px;
+            height: 28px;
+            background: rgba(148, 163, 184, 0.2);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid var(--border);
+        }
+
+        .layer-toggle.active {
+            background: linear-gradient(135deg, var(--accent), var(--primary));
+            border-color: var(--primary);
+        }
+
+        .layer-toggle-handle {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .layer-toggle.active .layer-toggle-handle {
+            transform: translateX(24px);
+        }
+
+        .volume-control {
             display: flex;
             align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-
-        .mute-btn.active {
-            background: #fee2e2;
-            color: #ef4444;
-            border-color: #fca5a5;
+            gap: 12px;
         }
 
         .volume-slider {
-            width: 100px;
+            -webkit-appearance: none;
+            appearance: none;
+            width: 120px;
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        .volume-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            box-shadow: 0 3px 10px rgba(37, 99, 235, 0.6);
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4);
+        }
+
+        .volume-value {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--muted);
+            min-width: 40px;
+            text-align: right;
         }
 
         .master-controls {
-            margin-top: 40px;
+            margin-top: 48px;
             display: flex;
             flex-direction: column;
             align-items: center;
             width: 100%;
-            max-width: 600px;
+            max-width: 900px;
         }
 
         .transport-btns {
             display: flex;
-            gap: 16px;
-            margin-bottom: 20px;
+            gap: 20px;
+            margin-bottom: 32px;
         }
 
         .transport-btn {
-            width: 56px;
-            height: 56px;
+            width: 68px;
+            height: 68px;
             border-radius: 50%;
             border: none;
-            background: #2563eb;
+            background: linear-gradient(135deg, #2563eb, #1e40af);
             color: white;
-            font-size: 1.5rem;
+            font-size: 1.75rem;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
-            transition: transform 0.1s;
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .transport-btn::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: -1;
+            filter: blur(8px);
+        }
+
+        .transport-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(37, 99, 235, 0.4);
+        }
+
+        .transport-btn:hover::before {
+            opacity: 0.5;
         }
 
         .transport-btn:active {
-            transform: scale(0.95);
+            transform: translateY(0);
+        }
+
+        .transport-btn.stop-btn {
+            background: linear-gradient(135deg, #64748b, #475569);
+            box-shadow: 0 8px 20px rgba(100, 116, 139, 0.25);
+        }
+
+        .transport-btn.stop-btn::before {
+            background: linear-gradient(135deg, #64748b, #475569);
+        }
+
+        .progress-section {
+            width: 100%;
+            margin-bottom: 12px;
         }
 
         .progress-container {
             width: 100%;
-            background: #e2e8f0;
-            height: 6px;
-            border-radius: 3px;
+            background: rgba(148, 163, 184, 0.15);
+            height: 10px;
+            border-radius: 5px;
             cursor: pointer;
             position: relative;
+            overflow: hidden;
         }
 
         .progress-bar {
             height: 100%;
-            background: #2563eb;
-            border-radius: 3px;
+            background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
+            border-radius: 5px;
             width: 0%;
             transition: width 0.1s linear;
+            position: relative;
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 12px;
+            height: 100%;
+            background: white;
+            border-radius: 0 5px 5px 0;
+            opacity: 0.9;
         }
 
         .time-display {
             display: flex;
             justify-content: space-between;
             width: 100%;
-            font-size: 0.85rem;
-            color: #64748b;
-            margin-top: 8px;
+            font-size: 0.9rem;
+            color: var(--muted);
+            margin-top: 10px;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
         }
 
         .empty-state {
             text-align: center;
-            color: #94a3b8;
+            color: var(--muted);
+            font-size: 1.05rem;
         }
     </style>
 </head>
 
-<body class="voice-page" style="color: #111827;">
-    <div class="page-shell">
-        <header class="page-hero"
-            style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0; color: white;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <p class="muted"
-                        style="margin:0; letter-spacing:0.08em; text-transform:uppercase; font-size:0.8rem;">Studio Tool
-                    </p>
-                    <h1 style="margin:4px 0 0 0;">🎚️ Multi-Track Player</h1>
-                </div>
-                <nav>
-                    <a href="/" style="color: white;">← Back to Projects</a>
-                </nav>
-            </div>
-        </header>
+<body class="voice-page">
+    <div class="top-nav">
+        <div class="top-nav-left">
+            <a href="/" class="logo">
+                <img src="/static/logo.png" alt="Audibound Studio">
+                <span>Studio</span>
+            </a>
+        </div>
+        <div class="top-nav-actions">
+            <button class="dark-mode-toggle" onclick="toggleDarkMode()" title="Toggle dark mode">🌙</button>
+        </div>
+    </div>
 
+    <div class="page-shell" style="padding-top: 32px; padding-bottom: 60px;">
         <div class="player-grid">
-            <!-- Sidebar: Story List -->
-            <div class="sidebar">
-                <h3
-                    style="margin-top:0; margin-bottom:16px; font-size:0.9rem; text-transform:uppercase; color:#64748b;">
-                    Stories</h3>
-                <div id="story-list">
-                    <div class="empty-state">Loading stories...</div>
+            <div class="player-container">
+                <div class="player-header">
+                    <h1 class="player-title">Multi-Track Audio Mixer</h1>
+                    <p class="player-subtitle">Precision stem control for voice, SFX, and music layers</p>
                 </div>
-            </div>
 
-            <!-- Main: Mixer -->
-            <div class="mixer-panel">
-                <div id="mixer-content" style="width:100%; display:flex; flex-direction:column; align-items:center;">
-                    <div class="empty-state" style="margin-top:100px;">
-                        <p>Select a story from the sidebar to load stems.</p>
+                <div class="player-body">
+                    <!-- Sidebar: Story List -->
+                    <div class="sidebar">
+                        <h3 class="sidebar-header">Stories</h3>
+                        <div id="story-list">
+                            <div class="empty-state">Loading...</div>
+                        </div>
+                    </div>
+
+                    <!-- Main: Mixer -->
+                    <div class="mixer-panel">
+                        <div id="mixer-content"
+                            style="width:100%; display:flex; flex-direction:column; align-items:center;">
+                            <div class="empty-state" style="margin-top:100px;">
+                                <p>Select a story to load audio stems</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -234,6 +614,13 @@
         let isPlaying = false;
         let duration = 0;
         let animationFrame = null;
+
+        // DVD-style gradient animation state
+        let gradientX = 0;
+        let gradientY = 0;
+        let gradientDX = 0.3;  // Speed in X direction
+        let gradientDY = 0.2;  // Speed in Y direction
+        let gradientAnimFrame = null;
 
         // --- Init ---
         async function loadStories() {
@@ -257,17 +644,15 @@
             container.innerHTML = stories.map(story => {
                 const files = story.audio_files || {};
                 const badges = [];
-                if (files.voice) badges.push('<span style="font-size:0.7rem; background:#dbeafe; color:#1e40af; padding:2px 6px; border-radius:4px;">Voice</span>');
-                if (files.sfx) badges.push('<span style="font-size:0.7rem; background:#fce7f3; color:#9d174d; padding:2px 6px; border-radius:4px;">SFX</span>');
-                if (files.music) badges.push('<span style="font-size:0.7rem; background:#dcfce7; color:#166534; padding:2px 6px; border-radius:4px;">Music</span>');
-                if (files.mix) badges.push('<span style="font-size:0.7rem; background:#fef3c7; color:#92400e; padding:2px 6px; border-radius:4px;">Mix</span>');
-                if (files.other) badges.push('<span style="font-size:0.7rem; background:#e5e7eb; color:#374151; padding:2px 6px; border-radius:4px;">Other</span>');
+                if (files.voice) badges.push('<span class="story-badge story-badge-voice">Voice</span>');
+                if (files.sfx) badges.push('<span class="story-badge story-badge-sfx">SFX</span>');
+                if (files.music) badges.push('<span class="story-badge story-badge-music">Music</span>');
 
                 return `
                 <div class="story-item" onclick="loadStory('${story.id}')" id="story-${story.id}">
-                    <div style="font-weight:600;">${story.title}</div>
-                    <div class="muted" style="font-size:0.8rem;">${new Date(story.timestamp).toLocaleDateString()}</div>
-                    <div style="display:flex; gap:4px; margin-top:4px; flex-wrap:wrap;">
+                    <div class="story-item-title">${story.title}</div>
+                    <div class="story-item-date">${new Date(story.timestamp).toLocaleDateString()}</div>
+                    <div class="story-item-badges">
                         ${badges.join('')}
                     </div>
                 </div>
@@ -362,16 +747,35 @@
 
         function renderTrackStrip(type, icon, label, url) {
             if (!url) return '';
+            const trackClass = type.includes('voice') ? 'voice' :
+                type.includes('music') ? 'music' :
+                    type.includes('sfx') ? 'sfx' : '';
+
+            // Use SVG icons instead of emojis
+            let svgIcon = '';
+            if (trackClass === 'voice') {
+                svgIcon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>';
+            } else if (trackClass === 'music') {
+                svgIcon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>';
+            } else if (trackClass === 'sfx') {
+                svgIcon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>';
+            }
+
             return `
                 <div class="track-strip">
-                    <div class="track-icon">${icon}</div>
+                    <div class="track-icon ${trackClass}">${svgIcon}</div>
                     <div class="track-info">
                         <div class="track-name">${label}</div>
                         <div class="track-status">Ready</div>
                     </div>
                     <div class="track-controls">
-                        <button class="mute-btn" id="mute-${type}" onclick="toggleMute('${type}')">🔇</button>
-                        <input type="range" class="volume-slider" min="0" max="1" step="0.1" value="1" oninput="setVolume('${type}', this.value)">
+                        <div class="layer-toggle active" id="toggle-${type}" onclick="toggleLayer('${type}')">
+                            <div class="layer-toggle-handle"></div>
+                        </div>
+                        <div class="volume-control">
+                            <input type="range" class="volume-slider" id="vol-${type}" min="0" max="1" step="0.01" value="1" oninput="setVolume('${type}', this.value)">
+                            <span class="volume-value" id="vol-value-${type}">100%</span>
+                        </div>
                     </div>
                 </div>
             `;
@@ -406,6 +810,64 @@
             document.getElementById('total-time').textContent = formatTime(duration);
         }
 
+        // DVD-style gradient animation
+        function animateGradient() {
+            const header = document.querySelector('.player-header');
+            if (!header) return;
+
+            // Update position
+            gradientX += gradientDX;
+            gradientY += gradientDY;
+
+            // Bounce off edges - check BEFORE clamping
+            if (gradientX >= 100) {
+                gradientX = 100;
+                gradientDX = -Math.abs(gradientDX); // Force negative
+                // Add slight randomness to speed
+                gradientDX += (Math.random() - 0.5) * 0.1;
+                gradientDX = Math.max(-0.5, Math.min(-0.2, gradientDX));
+            } else if (gradientX <= 0) {
+                gradientX = 0;
+                gradientDX = Math.abs(gradientDX); // Force positive
+                // Add slight randomness to speed
+                gradientDX += (Math.random() - 0.5) * 0.1;
+                gradientDX = Math.max(0.2, Math.min(0.5, gradientDX));
+            }
+
+            if (gradientY >= 100) {
+                gradientY = 100;
+                gradientDY = -Math.abs(gradientDY); // Force negative
+                // Add slight randomness to speed
+                gradientDY += (Math.random() - 0.5) * 0.1;
+                gradientDY = Math.max(-0.4, Math.min(-0.15, gradientDY));
+            } else if (gradientY <= 0) {
+                gradientY = 0;
+                gradientDY = Math.abs(gradientDY); // Force positive
+                // Add slight randomness to speed
+                gradientDY += (Math.random() - 0.5) * 0.1;
+                gradientDY = Math.max(0.15, Math.min(0.4, gradientDY));
+            }
+
+            // Apply new background position
+            header.style.backgroundPosition = `${gradientX}% ${gradientY}%`;
+
+            // Continue animation
+            gradientAnimFrame = requestAnimationFrame(animateGradient);
+        }
+
+        function startGradientAnimation() {
+            if (gradientAnimFrame) return; // Already running
+            animateGradient();
+        }
+
+        function stopGradientAnimation() {
+            if (gradientAnimFrame) {
+                cancelAnimationFrame(gradientAnimFrame);
+                gradientAnimFrame = null;
+            }
+            // Position stays frozen at current location
+        }
+
         function togglePlay() {
             if (isPlaying) {
                 pauseAudio();
@@ -418,6 +880,7 @@
             Object.values(audioElements).forEach(el => el.play());
             isPlaying = true;
             document.querySelector('.transport-btn').textContent = '⏸';
+            startGradientAnimation();
             startProgressLoop();
         }
 
@@ -425,6 +888,7 @@
             Object.values(audioElements).forEach(el => el.pause());
             isPlaying = false;
             document.querySelector('.transport-btn').textContent = '▶';
+            stopGradientAnimation();
             cancelAnimationFrame(animationFrame);
         }
 
@@ -436,6 +900,7 @@
             isPlaying = false;
             if (document.querySelector('.transport-btn'))
                 document.querySelector('.transport-btn').textContent = '▶';
+            stopGradientAnimation();
             updateProgressUI(0);
             cancelAnimationFrame(animationFrame);
         }
@@ -452,22 +917,28 @@
             updateProgressUI(time);
         }
 
-        function toggleMute(type) {
+        function toggleLayer(type) {
             const el = audioElements[type];
             if (!el) return;
 
             el.muted = !el.muted;
-            const btn = document.getElementById(`mute-${type}`);
+            const toggle = document.getElementById(`toggle-${type}`);
             if (el.muted) {
-                btn.classList.add('active');
+                toggle.classList.remove('active');
             } else {
-                btn.classList.remove('active');
+                toggle.classList.add('active');
             }
         }
 
         function setVolume(type, val) {
             const el = audioElements[type];
             if (el) el.volume = val;
+
+            // Update volume display
+            const volumeDisplay = document.getElementById(`vol-value-${type}`);
+            if (volumeDisplay) {
+                volumeDisplay.textContent = `${Math.round(val * 100)}%`;
+            }
         }
 
         function startProgressLoop() {
@@ -498,6 +969,31 @@
             const s = Math.floor(seconds % 60);
             return `${m}:${s.toString().padStart(2, '0')}`;
         }
+
+        // Dark mode functions
+        function toggleDarkMode() {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            localStorage.setItem('darkMode', isLight ? 'disabled' : 'enabled');
+
+            const toggle = document.querySelector('.dark-mode-toggle');
+            toggle.textContent = isLight ? '🌙' : '☀️';
+        }
+
+        function initDarkMode() {
+            const darkMode = localStorage.getItem('darkMode');
+            if (darkMode === 'disabled') {
+                document.body.classList.add('light-mode');
+                const toggle = document.querySelector('.dark-mode-toggle');
+                if (toggle) toggle.textContent = '🌙';
+            } else {
+                const toggle = document.querySelector('.dark-mode-toggle');
+                if (toggle) toggle.textContent = '☀️';
+            }
+        }
+
+        // Initialize dark mode
+        initDarkMode();
 
         // Start
         loadStories();
