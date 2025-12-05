@@ -1,14 +1,16 @@
 :root {
   font-family: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --bg: #050b18;
-  --bg-alt: #0f172a;
-  --card: #111b33;
+  --bg: #0a0f1e;
+  --bg-alt: #121A2F;
+  --card: #1a2338;
   --border: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(59, 130, 246, 0.4);
-  --text: #f8fafc;
-  --muted: rgba(248, 250, 252, 0.7);
-  --primary: #3b82f6;
-  --primary-dark: #1d4ed8;
+  --border-strong: rgba(168, 58, 250, 0.4);
+  --text: #FFF7EC;
+  --muted: rgba(255, 247, 236, 0.7);
+  --primary: #A83AFA;
+  --primary-dark: #6C22FA;
+  --accent: #FF2FAD;
+  --accent-orange: #FF8F3D;
   --success: #10b981;
   --danger: #ef4444;
   --warning: #f97316;
@@ -22,9 +24,20 @@
 body.voice-page {
   margin: 0;
   min-height: 100vh;
-  background: radial-gradient(circle at top, rgba(59, 130, 246, 0.25), transparent 55%),
+  background: radial-gradient(circle at top, rgba(168, 58, 250, 0.15), transparent 55%),
+    radial-gradient(circle at bottom right, rgba(255, 47, 173, 0.1), transparent 50%),
     var(--bg);
   color: var(--text);
+}
+
+/* Logo styling for dark/light mode */
+.logo img {
+  transition: filter 0.3s ease;
+}
+
+/* Dark mode - invert logo text from black to white, keep colors */
+body.voice-page:not(.light-mode) .logo img {
+  filter: brightness(0) invert(1);
 }
 
 .playground-grid {
@@ -185,18 +198,25 @@ textarea,
 }
 
 .primary-btn {
-  background: linear-gradient(135deg, var(--primary), #60a5fa);
+  background: linear-gradient(135deg, var(--accent), var(--primary));
   color: #fff;
-  box-shadow: 0 10px 25px rgba(59, 130, 246, 0.35);
+  box-shadow: 0 10px 25px rgba(255, 47, 173, 0.4);
 }
 
 .primary-btn:hover {
   transform: translateY(-1px);
+  box-shadow: 0 12px 30px rgba(255, 47, 173, 0.5);
 }
 
 .secondary-btn {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(168, 58, 250, 0.08);
+  border: 1px solid rgba(168, 58, 250, 0.3);
   color: var(--text);
+}
+
+.secondary-btn:hover {
+  background: rgba(168, 58, 250, 0.15);
+  border-color: rgba(168, 58, 250, 0.4);
 }
 
 .danger-btn {
@@ -214,7 +234,8 @@ textarea,
 }
 
 .voice-toolbar input {
-  width: 260px;
+  min-width: 260px;
+  flex: 1;
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 10px 14px;
@@ -370,6 +391,55 @@ textarea#test-text {
 #test-result audio {
   width: 100%;
   margin-top: 6px;
+}
+
+/* Tag Filter Buttons */
+.tag-filter {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tag-filter:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+}
+
+.tag-filter.active {
+  background: linear-gradient(135deg, var(--primary), #60a5fa);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+/* Hidden Voice Styling */
+.voice-card--invisible {
+  opacity: 0.5;
+  border: 2px dashed rgba(148, 163, 184, 0.3);
+  position: relative;
+}
+
+.voice-card--invisible:hover {
+  opacity: 0.7;
+  border-color: rgba(148, 163, 184, 0.5);
+}
+
+.invisible-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: var(--danger);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  z-index: 10;
 }
 
 @media (max-width: 640px) {

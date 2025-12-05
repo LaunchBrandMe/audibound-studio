@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sesame Playground</title>
+    <title>Kokoro Playground</title>
     <link rel="stylesheet" href="/static/styles.css">
     <style>
         /* Dark Mode Support */
@@ -315,29 +315,29 @@
 
     <div class="page-shell">
         <header style="margin-bottom: 32px;">
-            <h1 style="margin: 0; font-size: clamp(1.9rem, 2.5vw, 2.6rem);">🌱 Sesame Playground</h1>
-            <p style="margin: 8px 0 0 0; color: var(--muted); font-size: 1.05rem;">Experiment with voice gestures and
-                inline tags to trigger laughs, pauses, stutters, and more.</p>
+            <h1 style="margin: 0; font-size: clamp(1.9rem, 2.5vw, 2.6rem);">🎤 Kokoro Playground</h1>
+            <p style="margin: 8px 0 0 0; color: var(--muted); font-size: 1.05rem;">Fast multi-voice TTS with natural
+                speech patterns and expressive delivery.</p>
         </header>
 
         <div class="card voice-select-container">
             <label for="voice-select">Reference Voice</label>
             <select id="voice-select">
-                <option value="">Use base Sesame voice</option>
+                <option value="">Use base Kokoro voice</option>
             </select>
             <button class="secondary-btn" onclick="refreshVoices()" style="margin-top:8px;">🔄 Refresh Voices</button>
         </div>
 
         <div class="card">
-            <h3 style="margin: 0 0 16px 0; font-size: 1.15rem; color: var(--text);">Voice Gestures & Tags</h3>
+            <h3 style="margin: 0 0 16px 0; font-size: 1.15rem; color: var(--text);">Voice & Style Controls</h3>
             <div class="token-grid">
-                <button class="token-btn" onclick="insertToken('[laughs softly]')">😊 Laugh softly</button>
-                <button class="token-btn" onclick="insertToken('[laughs loudly]')">😂 Laugh loudly</button>
-                <button class="token-btn" onclick="insertToken('[sighs]')">😮‍💨 Sigh</button>
-                <button class="token-btn" onclick="insertToken('[clears throat]')">🗣️ Clear throat</button>
-                <button class="token-btn" onclick="insertToken('[stutters]')">🗨️ Stutter</button>
-                <button class="token-btn" onclick="insertToken('[whispers]')">🤫 Whisper</button>
-                <button class="token-btn" onclick="insertToken('[humms]')">🎵 Hum</button>
+                <button class="token-btn" onclick="insertToken('[neutral]')">😐 Neutral</button>
+                <button class="token-btn" onclick="insertToken('[happy]')">😊 Happy</button>
+                <button class="token-btn" onclick="insertToken('[sad]')">😢 Sad</button>
+                <button class="token-btn" onclick="insertToken('[angry]')">😠 Angry</button>
+                <button class="token-btn" onclick="insertToken('[excited]')">🤩 Excited</button>
+                <button class="token-btn" onclick="insertToken('[calm]')">😌 Calm</button>
+                <button class="token-btn" onclick="insertToken('[whisper]')">🤫 Whisper</button>
                 <button class="token-btn" onclick="insertToken('[pause 1s]')">⏸️ Pause 1s</button>
             </div>
 
@@ -345,11 +345,12 @@
                 style="display: block; font-size: 0.9rem; color: var(--muted); margin-bottom: 8px; font-weight: 600;">Your
                 Script</label>
             <textarea id="prompt"
-                placeholder="[0] Hello there. [laughs softly] I can switch into a whisper whenever you like. [whispers] This is our secret.">[0] Hello there. [laughs softly] I can switch into a whisper whenever you like. [whispers] This is our secret.</textarea>
+                placeholder="[neutral] Hello there. You can change my emotional tone with style tags.">Hello! This is a test of the Kokoro voice engine.</textarea>
 
             <div id="text-stats"
                 style="font-size: 0.85rem; color: var(--muted); margin: 8px 0; font-family: monospace;">
-                <span id="char-count">0 characters</span> • <span id="word-count">0 words</span> • <span id="cost-est" style="color: #10b981; font-weight: 600;">💰 $0.000</span>
+                <span id="char-count">0 characters</span> • <span id="word-count">0 words</span> • <span id="cost-est"
+                    style="color: #10b981; font-weight: 600;">💰 $0.000</span>
             </div>
 
             <div class="action-buttons">
@@ -363,11 +364,11 @@
             <div class="help-text">
                 <h3>📘 Quick Reference</h3>
                 <ul>
-                    <li>Use <code>[0]</code> at the start to set the speaker/voice</li>
-                    <li>Insert gestures like <code>[laughs softly]</code>, <code>[whispers]</code> anywhere in your text
+                    <li>Insert style tags like <code>[happy]</code>, <code>[whisper]</code> to change emotional tone
                     </li>
                     <li>Use <code>[pause 2s]</code> to add silence (1-5 seconds)</li>
-                    <li>Stack multiple gestures for expressive readings</li>
+                    <li>Kokoro supports fast, natural multi-voice generation</li>
+                    <li>Select different voices from the dropdown for character variety</li>
                 </ul>
             </div>
         </div>
@@ -430,7 +431,7 @@
                 const data = await res.json();
                 const voices = data.voices || [];
                 voiceSelect.innerHTML = '<option value="">Use base Sesame voice</option>';
-                voices.filter(v => (v.engine || '').toLowerCase() === 'sesame')
+                voices.filter(v => (v.engine || '').toLowerCase() === 'kokoro')
                     .forEach(v => {
                         const opt = document.createElement('option');
                         opt.value = v.id;
@@ -473,7 +474,7 @@
             const controller = new AbortController();
             currentAbort = controller;
             try {
-                const response = await fetch(`${API_URL}/playground/sesame/generate`, {
+                const response = await fetch(`${API_URL}/playground/kokoro/generate`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ text, voice_id: voiceSelect.value || null }),
@@ -510,7 +511,13 @@
             document.getElementById('char-count').textContent = `${charCount} character${charCount !== 1 ? 's' : ''}`;
             document.getElementById('word-count').textContent = `${wordCount} word${wordCount !== 1 ? 's' : ''}`;
 
-            console.log(`[Sesame] Text stats - Characters: ${charCount}, Words: ${wordCount}`);
+            // Calculate cost (Kokoro: $0.01-$0.02 per 1k chars)
+            const minCost = (charCount / 1000) * 0.01;
+            const maxCost = (charCount / 1000) * 0.02;
+            const costText = minCost === maxCost ? `$${minCost.toFixed(3)}` : `$${minCost.toFixed(3)}-$${maxCost.toFixed(3)}`;
+            document.getElementById('cost-est').textContent = `💰 ${costText}`;
+
+            console.log(`[Kokoro] Text stats - Characters: ${charCount}, Words: ${wordCount}, Est cost: ${costText}`);
         });
 
         // Trigger initial count

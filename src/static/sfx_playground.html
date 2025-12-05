@@ -7,16 +7,147 @@
     <title>Studio Playground · SFX & Music</title>
     <link rel="stylesheet" href="/static/styles.css">
     <style>
+        /* Dark Mode Support */
+        body.voice-page.light-mode {
+            --bg: #FFF7EC;
+            --bg-alt: #ffffff;
+            --card: #ffffff;
+            --border: #e5d4c1;
+            --border-strong: rgba(168, 58, 250, 0.4);
+            --text: #121A2F;
+            --muted: #5a6478;
+            --primary: #A83AFA;
+            --accent: #FF2FAD;
+            background: linear-gradient(to bottom, #FFF7EC, #ffffff);
+        }
+
+        .top-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .top-nav-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .logo span {
+            margin-bottom: -7px;
+        }
+
+        .logo img {
+            height: 32px;
+        }
+
+        .top-nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .dark-mode-toggle {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s ease;
+            color: var(--text);
+        }
+
+        .dark-mode-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .burger-menu {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s ease;
+            color: var(--text);
+        }
+
+        .burger-menu:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 24px;
+            margin-top: 8px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            min-width: 220px;
+            z-index: 1000;
+        }
+
+        .menu-dropdown.active {
+            display: block;
+        }
+
+        .menu-dropdown a {
+            display: block;
+            padding: 12px 16px;
+            color: var(--text);
+            text-decoration: none;
+            transition: background 0.2s ease;
+            font-size: 0.95rem;
+        }
+
+        .menu-dropdown a:first-child {
+            border-radius: 12px 12px 0 0;
+        }
+
+        .menu-dropdown a:last-child {
+            border-radius: 0 0 12px 12px;
+        }
+
+        .menu-dropdown a:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .menu-dropdown a:not(:last-child) {
+            border-bottom: 1px solid var(--border);
+        }
+
         .history-sidebar {
-            background: #f8fafc;
+            background: rgba(255, 255, 255, 0.03);
             border-radius: 12px;
             padding: 16px;
             margin-top: 20px;
+            border: 1px solid var(--border);
         }
 
         .history-item {
-            background: #fff;
-            border: 1px solid #e2e8f0;
+            background: var(--bg-alt);
+            border: 1px solid var(--border);
             border-radius: 8px;
             padding: 10px;
             margin-bottom: 10px;
@@ -28,26 +159,150 @@
         }
 
         .history-item button {
-            margin-top: 6px;
-            padding: 4px 10px;
-            font-size: 0.8rem;
+            margin-top: 8px;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.08));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 8px;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .history-item button:hover {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(37, 99, 235, 0.15));
+            border-color: rgba(59, 130, 246, 0.5);
+            transform: translateY(-1px);
+        }
+
+        /* Improved prompt textareas */
+        #sfx-prompt,
+        #music-prompt {
+            width: 100%;
+            min-height: 110px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            resize: vertical;
+        }
+
+        /* Premium slider design */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(90deg,
+                    rgba(59, 130, 246, 0.2) 0%,
+                    rgba(59, 130, 246, 0.4) 100%);
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            margin-top: 8px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+            transition: all 0.2s ease;
+            border: 2px solid white;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            box-shadow: 0 3px 12px rgba(37, 99, 235, 0.6);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+            transition: all 0.2s ease;
+            border: 2px solid white;
+        }
+
+        input[type="range"]::-moz-range-thumb:hover {
+            transform: scale(1.15);
+            box-shadow: 0 3px 12px rgba(37, 99, 235, 0.6);
+        }
+
+        /* Better range field labels */
+        .range-field label {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .range-field label span {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        /* Light mode adjustments for SFX playground */
+        body.voice-page.light-mode #sfx-prompt,
+        body.voice-page.light-mode #music-prompt {
+            background: #ffffff;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        body.voice-page.light-mode #sfx-prompt::placeholder,
+        body.voice-page.light-mode #music-prompt::placeholder {
+            color: var(--muted);
+        }
+
+        body.voice-page.light-mode input[type="range"] {
+            background: linear-gradient(90deg,
+                    rgba(168, 58, 250, 0.15) 0%,
+                    rgba(168, 58, 250, 0.3) 100%);
+            border-color: var(--border);
         }
     </style>
 </head>
 
 <body class="voice-page">
-    <div class="page-shell">
-        <header class="page-hero">
-            <div>
-                <p class="muted" style="margin:0; letter-spacing:0.08em; text-transform:uppercase; font-size:0.8rem;">
-                    Playground</p>
-                <h1>🔊 Studio Playground</h1>
-                <p>Create ambient SFX beds and quick musical sketches without leaving the browser.</p>
-            </div>
-            <nav style="display:flex; gap:12px; flex-wrap:wrap;">
+    <div class="top-nav">
+        <div class="top-nav-left">
+            <a href="/" class="logo">
+                <img src="/static/logo.png" alt="Audibound Studio">
+                <span>Studio</span>
+            </a>
+        </div>
+        <div class="top-nav-actions">
+            <button class="dark-mode-toggle" onclick="toggleDarkMode()" title="Toggle dark mode">🌙</button>
+            <button class="burger-menu" onclick="toggleMenu()" title="Menu">☰</button>
+            <div id="menu-dropdown" class="menu-dropdown">
                 <a href="/">← Back to Projects</a>
-                <a href="/static/voices.html" style="color:#93c5fd;">Cloning Lab ↗</a>
-            </nav>
+                <a href="/static/cost_analytics.html">💰 Cost Analytics</a>
+                <a href="/static/voices.html">🎙️ Voice & Cloning Lab</a>
+                <a href="/static/sfx_playground.html">🔊 SFX & Music</a>
+                <a href="/static/sesame_playground.html">🌱 Sesame Playground</a>
+                <a href="/static/kokoro_playground.html">🎤 Kokoro Playground</a>
+                <a href="/static/styletts2_playground.html">🎭 StyleTTS2 Playground</a>
+                <a href="/static/indextts2_playground.html">📡 IndexTTS2 Playground</a>
+                <a href="/static/dia_playground.html">💎 Dia Playground</a>
+                <a href="/static/multitrack_player.html">▶ Multi-Track Player</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-shell">
+        <header style="margin-bottom: 32px;">
+            <h1 style="margin: 0; font-size: clamp(1.9rem, 2.5vw, 2.6rem);">🔊 SFX & Music Playground</h1>
+            <p style="margin: 8px 0 0 0; color: var(--muted); font-size: 1.05rem;">Create ambient SFX beds and quick
+                musical sketches without leaving the browser.</p>
         </header>
 
         <section class="playground-grid">
@@ -200,8 +455,46 @@
             }
         }
 
+        // Menu toggle
+        function toggleMenu() {
+            const menu = document.getElementById('menu-dropdown');
+            menu.classList.toggle('active');
+        }
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('menu-dropdown');
+            const burgerBtn = document.querySelector('.burger-menu');
+            if (menu && !menu.contains(e.target) && e.target !== burgerBtn) {
+                menu.classList.remove('active');
+            }
+        });
+
+        // Dark mode functions
+        function toggleDarkMode() {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            localStorage.setItem('darkMode', isLight ? 'disabled' : 'enabled');
+
+            const toggle = document.querySelector('.dark-mode-toggle');
+            toggle.textContent = isLight ? '🌙' : '☀️';
+        }
+
+        function initDarkMode() {
+            const darkMode = localStorage.getItem('darkMode');
+            if (darkMode === 'disabled') {
+                document.body.classList.add('light-mode');
+                const toggle = document.querySelector('.dark-mode-toggle');
+                if (toggle) toggle.textContent = '🌙';
+            } else {
+                const toggle = document.querySelector('.dark-mode-toggle');
+                if (toggle) toggle.textContent = '☀️';
+            }
+        }
+
         // Load history on page load
         window.addEventListener('DOMContentLoaded', () => {
+            initDarkMode();
             loadHistory('sfx');
             loadHistory('music');
         });

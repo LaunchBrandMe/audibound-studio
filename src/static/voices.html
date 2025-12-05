@@ -6,22 +6,249 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cloning Lab - Audibound Studio</title>
     <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        /* Dark Mode Support */
+        body.voice-page.light-mode {
+            --bg: #FFF7EC;
+            --bg-alt: #ffffff;
+            --card: #ffffff;
+            --border: #e5d4c1;
+            --border-strong: rgba(168, 58, 250, 0.4);
+            --text: #121A2F;
+            --muted: #5a6478;
+            --primary: #A83AFA;
+            --accent: #FF2FAD;
+            background: linear-gradient(to bottom, #FFF7EC, #ffffff);
+        }
+
+        /* Light mode input/textarea fixes */
+        body.voice-page.light-mode .field input,
+        body.voice-page.light-mode .field select,
+        body.voice-page.light-mode textarea,
+        body.voice-page.light-mode #search-input {
+            background: #f9fafb;
+            color: #111827;
+            border: 1px solid #d1d5db;
+        }
+
+        body.voice-page.light-mode .field input::placeholder,
+        body.voice-page.light-mode textarea::placeholder {
+            color: #9ca3af;
+        }
+
+        body.voice-page.light-mode .field input:focus,
+        body.voice-page.light-mode .field select:focus,
+        body.voice-page.light-mode textarea:focus,
+        body.voice-page.light-mode #search-input:focus {
+            border-color: #2563eb;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .top-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .top-nav-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .logo span {
+            margin-bottom: -7px;
+        }
+
+        .logo img {
+            height: 32px;
+        }
+
+        .top-nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .dark-mode-toggle {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s ease;
+            color: var(--text);
+        }
+
+        .dark-mode-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .burger-menu {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s ease;
+            color: var(--text);
+        }
+
+        .burger-menu:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 24px;
+            margin-top: 8px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            min-width: 220px;
+            z-index: 1000;
+        }
+
+        .menu-dropdown.active {
+            display: block;
+        }
+
+        .menu-dropdown a {
+            display: block;
+            padding: 12px 16px;
+            color: var(--text);
+            text-decoration: none;
+            transition: background 0.2s ease;
+            font-size: 0.95rem;
+        }
+
+        .menu-dropdown a:first-child {
+            border-radius: 12px 12px 0 0;
+        }
+
+        .menu-dropdown a:last-child {
+            border-radius: 0 0 12px 12px;
+        }
+
+        .menu-dropdown a:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .menu-dropdown a:not(:last-child) {
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* Modern select dropdown styling */
+        select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1.5L6 6.5L11 1.5" stroke="%23ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 40px;
+        }
+
+        body.voice-page.light-mode select {
+            background-image: url('data:image/svg+xml;utf8,<svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1.5L6 6.5L11 1.5" stroke="%236b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+        }
+
+        #sort-select {
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background-color: rgba(15, 23, 42, 0.65);
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        body.voice-page.light-mode #sort-select {
+            background-color: #f9fafb;
+            color: #111827;
+            border: 1px solid #d1d5db;
+        }
+
+        /* Voice card light mode fixes */
+        body.voice-page.light-mode .voice-card {
+            background: #ffffff !important;
+            border: 1px solid #e5e7eb;
+        }
+
+        body.voice-page.light-mode .voice-card-header {
+            background: #f9fafb;
+        }
+
+        body.voice-page.light-mode .voice-card h3,
+        body.voice-page.light-mode .voice-card p,
+        body.voice-page.light-mode .voice-card .voice-bio {
+            color: #111827 !important;
+        }
+
+        body.voice-page.light-mode .voice-card .voice-meta {
+            color: #6b7280 !important;
+        }
+
+        body.voice-page.light-mode .voice-card .tag {
+            background: #e5e7eb;
+            color: #4b5563;
+        }
+    </style>
 </head>
 
 <body class="voice-page">
-    <div class="page-shell">
-        <header class="page-hero">
-            <div>
-                <p class="muted" style="margin:0; letter-spacing:0.08em; text-transform:uppercase; font-size:0.8rem;">
-                    Library</p>
-                <h1>🧪 Cloning Lab</h1>
-                <p>Upload and curate expressive reference voices for cloning.</p>
-            </div>
-            <nav style="display:flex; gap:12px; flex-wrap:wrap;">
+    <div class="top-nav">
+        <div class="top-nav-left">
+            <a href="/" class="logo">
+                <img src="/static/logo.png" alt="Audibound Studio">
+                <span>Studio</span>
+            </a>
+        </div>
+        <div class="top-nav-actions">
+            <button class="dark-mode-toggle" onclick="toggleDarkMode()" title="Toggle dark mode">🌙</button>
+            <button class="burger-menu" onclick="toggleMenu()" title="Menu">☰</button>
+            <div id="menu-dropdown" class="menu-dropdown">
                 <a href="/">← Back to Projects</a>
-                <a href="/playground/sesame" style="color:#93c5fd;">Sesame Playground ↗</a>
-                <a href="/playground/dia" style="color:#f9a8d4;">Dia Playground ↗</a>
-            </nav>
+                <a href="/static/cost_analytics.html">💰 Cost Analytics</a>
+                <a href="/static/voices.html">🎙️ Voice & Cloning Lab</a>
+                <a href="/static/sfx_playground.html">🔊 SFX & Music</a>
+                <a href="/static/sesame_playground.html">🌱 Sesame Playground</a>
+                <a href="/static/kokoro_playground.html">🎤 Kokoro Playground</a>
+                <a href="/static/styletts2_playground.html">🎭 StyleTTS2 Playground</a>
+                <a href="/static/indextts2_playground.html">📡 IndexTTS2 Playground</a>
+                <a href="/static/dia_playground.html">💎 Dia Playground</a>
+                <a href="/static/multitrack_player.html">▶ Multi-Track Player</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-shell">
+        <header style="margin-bottom: 32px;">
+            <h1 style="margin: 0; font-size: clamp(1.9rem, 2.5vw, 2.6rem);">🎙️ Voice & Cloning Lab</h1>
+            <p style="margin: 8px 0 0 0; color: var(--muted); font-size: 1.05rem;">Preview, update and curate expressive
+                reference voices.</p>
         </header>
 
         <section class="card upload-card">
@@ -39,10 +266,23 @@
                     <input type="text" id="voice-name" placeholder="e.g., Sarah – Young Energetic" />
                 </div>
                 <div class="field" style="flex:1;">
+                    <label for="voice-bio">Bio / Description</label>
+                    <textarea id="voice-bio" placeholder="Warm storyteller with British accent..." rows="2"></textarea>
+                </div>
+                <div class="field" style="flex:1;">
                     <label for="voice-tags">Tags (comma separated)</label>
                     <input type="text" id="voice-tags" placeholder="female, british, storyteller" />
                 </div>
-                <div class="field" style="max-width:240px;">
+                <div class="field" style="max-width:200px;">
+                    <label for="voice-gender">Gender</label>
+                    <select id="voice-gender">
+                        <option value="neutral">Neutral</option>
+                        <option value="female">Female</option>
+                        <option value="male">Male</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="field" style="max-width:200px;">
                     <label for="voice-engine">Engine</label>
                     <select id="voice-engine">
                         <option value="styletts2">StyleTTS2</option>
@@ -50,6 +290,10 @@
                         <option value="indextts2">IndexTTS2</option>
                         <option value="dia">Dia 1.6B</option>
                     </select>
+                </div>
+                <div class="field" style="flex:1;">
+                    <label for="profile-image-input">Profile Image (optional)</label>
+                    <input type="file" id="profile-image-input" accept="image/*" style="display:block; padding:8px;" />
                 </div>
                 <div style="display:flex; align-items:flex-end;">
                     <button class="primary-btn" onclick="uploadVoice()">Upload Voice</button>
@@ -60,7 +304,38 @@
         <section class="card">
             <div class="voice-toolbar">
                 <h2 class="section-title">Your Voices (<span id="voice-count">0</span>)</h2>
-                <input type="text" id="search-input" placeholder="Search voices..." onkeyup="searchVoices()" />
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <input type="text" id="search-input" placeholder="Search by name, bio, gender, tags..."
+                        onkeyup="searchVoices()" />
+                    <select id="sort-select" onchange="searchVoices()">
+                        <option value="name-asc">Name (A-Z)</option>
+                        <option value="name-desc">Name (Z-A)</option>
+                        <option value="date-desc">Newest First</option>
+                        <option value="date-asc">Oldest First</option>
+                        <option value="engine-asc">Engine (A-Z)</option>
+                        <option value="duration-desc">Duration (Longest)</option>
+                        <option value="duration-asc">Duration (Shortest)</option>
+                    </select>
+                </div>
+            </div>
+            <!-- Engine Tag Filters -->
+            <div class="tag-filters" style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+                <button class="tag-filter active" data-engine="all" onclick="filterByEngine('all')">All</button>
+                <button class="tag-filter" data-engine="kokoro" onclick="filterByEngine('kokoro')">Kokoro</button>
+                <button class="tag-filter" data-engine="styletts2"
+                    onclick="filterByEngine('styletts2')">StyleTTS2</button>
+                <button class="tag-filter" data-engine="indextts2"
+                    onclick="filterByEngine('indextts2')">IndexTTS2</button>
+                <button class="tag-filter" data-engine="sesame" onclick="filterByEngine('sesame')">Sesame</button>
+                <button class="tag-filter" data-engine="dia" onclick="filterByEngine('dia')">Dia</button>
+            </div>
+            <!-- Bulk Actions -->
+            <div style="display: flex; gap: 8px; margin-bottom: 16px; align-items: center;">
+                <span style="font-size: 0.85rem; color: var(--text-muted);">Bulk actions for visible voices:</span>
+                <button class="secondary-btn" style="padding: 6px 12px; font-size: 0.85rem;"
+                    onclick="bulkToggleVisibility(false)">👁️‍🗨️ Hide All</button>
+                <button class="secondary-btn" style="padding: 6px 12px; font-size: 0.85rem;"
+                    onclick="bulkToggleVisibility(true)">👁️ Show All</button>
             </div>
             <div id="voice-grid" class="voice-grid"></div>
             <div id="empty-state" class="empty-state">
@@ -70,16 +345,39 @@
         </section>
     </div>
 
+    <!-- Toast Notifications -->
+    <div id="toast-container"
+        style="position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; max-width: 400px;">
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal"
+        style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); z-index: 10000; backdrop-filter: blur(4px);">
+        <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px;">
+            <div
+                style="background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 28px; max-width: 420px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);">
+                <h3 id="confirm-title" style="margin: 0 0 12px 0; font-size: 1.2rem;"></h3>
+                <p id="confirm-message" style="margin: 0 0 24px 0; color: var(--muted); line-height: 1.5;"></p>
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button class="secondary-btn" onclick="closeConfirmModal(false)"
+                        style="padding: 10px 20px;">Cancel</button>
+                    <button class="primary-btn" onclick="closeConfirmModal(true)"
+                        style="padding: 10px 20px;">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <section id="test-panel">
         <div class="test-panel__inner">
             <div class="test-panel__header">
-                <h3>Test Voice</h3>
+                <h3>Clone Voice</h3>
                 <button class="test-panel__close" onclick="closeTestPanel()">×</button>
             </div>
             <div id="test-voice-info" class="muted" style="font-size:0.9rem;"></div>
             <textarea id="test-text">This is a test of the voice cloning system.</textarea>
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                <button class="primary-btn" style="flex:1;" onclick="generateTest()">🔊 Generate Test Audio</button>
+                <button class="primary-btn" style="flex:1;" onclick="generateTest()">🔊 Generate</button>
                 <button class="secondary-btn" style="flex:1;" onclick="streamTestVoice()">⚡ Stream Preview</button>
             </div>
             <div id="test-result" class="muted"></div>
@@ -94,18 +392,43 @@
     <section id="edit-panel" style="display:none;">
         <div class="test-panel__inner">
             <div class="test-panel__header">
-                <h3>Edit Voice</h3>
+                <h3>Edit Voice Profile</h3>
                 <button class="test-panel__close" onclick="closeEditPanel()">×</button>
             </div>
+            <label style="font-size:0.85rem; color:var(--text-muted); margin-bottom:4px; display:block;">Name</label>
             <input type="text" id="edit-name" placeholder="Voice name" />
+            <label
+                style="font-size:0.85rem; color:var(--text-muted); margin-bottom:4px; margin-top:12px; display:block;">Bio
+                / Description</label>
+            <textarea id="edit-bio" placeholder="Voice profile bio..." rows="3"></textarea>
+            <label
+                style="font-size:0.85rem; color:var(--text-muted); margin-bottom:4px; margin-top:12px; display:block;">Tags
+                (comma separated)</label>
             <input type="text" id="edit-tags" placeholder="Tags (comma separated)" />
+            <label
+                style="font-size:0.85rem; color:var(--text-muted); margin-bottom:4px; margin-top:12px; display:block;">Gender</label>
+            <select id="edit-gender">
+                <option value="neutral">Neutral</option>
+                <option value="female">Female</option>
+                <option value="male">Male</option>
+                <option value="other">Other</option>
+            </select>
+            <label
+                style="font-size:0.85rem; color:var(--text-muted); margin-bottom:4px; margin-top:12px; display:block;">Engine</label>
             <select id="edit-engine">
                 <option value="styletts2">StyleTTS2</option>
                 <option value="sesame">Sesame CSM</option>
                 <option value="indextts2">IndexTTS2</option>
                 <option value="dia">Dia 1.6B</option>
             </select>
-            <button class="primary-btn" onclick="saveEditVoice()">💾 Save Changes</button>
+            <label
+                style="font-size:0.85rem; color:var(--text-muted); margin-bottom:4px; margin-top:12px; display:block; display:flex; align-items:center; gap:8px;">
+                <input type="checkbox" id="edit-visible" checked style="width:18px; height:18px;" />
+                Visible in voice dropdowns
+            </label>
+            <p style="font-size:0.75rem; color:var(--text-muted); margin:4px 0 0 26px; font-style:italic;">Uncheck to
+                hide this voice from Studio page character selection (testing new voices)</p>
+            <button class="primary-btn" style="margin-top:16px;" onclick="saveEditVoice()">💾 Save Changes</button>
             <div id="edit-result" class="muted"></div>
         </div>
     </section>
@@ -121,6 +444,105 @@
         let isChunkPlaying = false;
         let currentStreamAbort = null;
         let currentSource = null;
+        let selectedEngineFilter = 'all';
+        let currentFilteredVoices = []; // Track currently displayed voices for bulk actions
+
+        // Toast notification system
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            const colors = {
+                success: 'linear-gradient(135deg, #10b981, #059669)',
+                error: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                warning: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                info: 'linear-gradient(135deg, #3b82f6, #2563eb)'
+            };
+
+            const icons = {
+                success: '✓',
+                error: '✕',
+                warning: '⚠',
+                info: 'ℹ'
+            };
+
+            toast.style.cssText = `
+                background: ${colors[type]};
+                color: white;
+                padding: 16px 20px;
+                border-radius: 12px;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                font-size: 0.95rem;
+                animation: slideIn 0.3s ease;
+                cursor: pointer;
+            `;
+
+            toast.innerHTML = `
+                <span style="font-size: 1.2rem; font-weight: bold;">${icons[type]}</span>
+                <span style="flex: 1;">${message}</span>
+            `;
+
+            toast.onclick = () => {
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            };
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // Modern confirmation modal
+        let confirmResolve = null;
+
+        function showConfirm(title, message) {
+            return new Promise((resolve) => {
+                confirmResolve = resolve;
+                document.getElementById('confirm-title').textContent = title;
+                document.getElementById('confirm-message').textContent = message;
+                document.getElementById('confirm-modal').style.display = 'block';
+            });
+        }
+
+        function closeConfirmModal(confirmed) {
+            document.getElementById('confirm-modal').style.display = 'none';
+            if (confirmResolve) {
+                confirmResolve(confirmed);
+                confirmResolve = null;
+            }
+        }
+
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
 
         const uploadArea = document.getElementById('upload-area');
         const uploadForm = document.getElementById('upload-form');
@@ -191,13 +613,24 @@
         }
 
         async function uploadVoice() {
-            if (!selectedFile) return alert('Select an audio file first');
+            if (!selectedFile) {
+                showToast('Please select an audio file first', 'warning');
+                return;
+            }
 
             const formData = new FormData();
             formData.append('file', selectedFile);
             formData.append('name', document.getElementById('voice-name').value);
+            formData.append('bio', document.getElementById('voice-bio').value);
             formData.append('tags', document.getElementById('voice-tags').value);
+            formData.append('gender', document.getElementById('voice-gender').value);
             formData.append('engine', document.getElementById('voice-engine').value);
+
+            // Add profile image if selected
+            const profileImageInput = document.getElementById('profile-image-input');
+            if (profileImageInput.files && profileImageInput.files[0]) {
+                formData.append('profile_image', profileImageInput.files[0]);
+            }
 
             try {
                 const response = await fetch(`${API_URL}/voices/upload`, {
@@ -212,12 +645,15 @@
                 uploadForm.style.display = 'none';
                 uploadStatus.textContent = 'Supports WAV / MP3 / FLAC (5–30 seconds, max 10MB)';
                 document.getElementById('voice-name').value = '';
+                document.getElementById('voice-bio').value = '';
                 document.getElementById('voice-tags').value = '';
+                document.getElementById('voice-gender').value = 'neutral';
+                profileImageInput.value = '';
                 fileInput.value = '';
                 loadVoices();
-                alert('Voice uploaded successfully!');
+                showToast('Voice uploaded successfully!', 'success');
             } catch (error) {
-                alert(`Upload failed: ${error.message}`);
+                showToast(`Upload failed: ${error.message}`, 'error');
             }
         }
 
@@ -226,17 +662,18 @@
                 const response = await fetch(`${API_URL}/voices`);
                 const data = await response.json();
                 voices = data.voices || [];
-                renderVoices(voices);
+                await renderVoices(voices);
             } catch (error) {
                 console.error('Error loading voices:', error);
             }
         }
 
-        function renderVoices(list) {
+        async function renderVoices(list) {
             const grid = document.getElementById('voice-grid');
             const emptyState = document.getElementById('empty-state');
             const countSpan = document.getElementById('voice-count');
 
+            currentFilteredVoices = list; // Track for bulk actions
             countSpan.textContent = list.length;
 
             if (!list.length) {
@@ -246,38 +683,194 @@
             }
 
             emptyState.style.display = 'none';
-            grid.innerHTML = list.map(voice => {
+
+            // Fetch latest sample for each voice
+            const voicesWithSamples = await Promise.all(list.map(async voice => {
+                try {
+                    const response = await fetch(`${API_URL}/voices/${voice.id}/samples`);
+                    const data = await response.json();
+                    const latestSample = data.samples && data.samples.length > 0 ? data.samples[0] : null;
+                    return { ...voice, latestSample };
+                } catch (error) {
+                    console.error(`Error fetching samples for ${voice.id}:`, error);
+                    return { ...voice, latestSample: null };
+                }
+            }));
+
+            grid.innerHTML = voicesWithSamples.map(voice => {
                 const created = voice.created_at ? new Date(voice.created_at).toLocaleDateString() : '';
                 const duration = typeof voice.duration_seconds === 'number'
                     ? `${voice.duration_seconds.toFixed(1)}s`
                     : '';
                 const engineLabel = (voice.engine || '').toUpperCase();
+                const referenceUrl = voice.reference_file ? `/${voice.reference_file}` : null;
+                const profileImageUrl = voice.profile_image ? `/${voice.profile_image}` : null;
+                const bio = voice.bio || '';
+                const gender = voice.gender || 'neutral';
+                const genderIcon = gender === 'female' ? '♀' : gender === 'male' ? '♂' : gender === 'other' ? '⚧' : '◆';
+                const isVisible = voice.visible !== false; // Default to visible
+                const invisibleClass = !isVisible ? 'voice-card--invisible' : '';
+                const invisibleBadge = !isVisible ? '<span class="invisible-badge">HIDDEN</span>' : '';
+
                 return `
-                <article class="voice-card">
-                    <div class="voice-card__head">
-                        <div>
-                            <p class="voice-card__name">${voice.name}</p>
-                            <p class="voice-card__meta">${duration ? `${duration} · ` : ''}${created}</p>
+                <article class="voice-card ${invisibleClass}">
+                    ${invisibleBadge}
+                    <!-- Profile Header with Image -->
+                    <div style="display: flex; gap: 12px; margin-bottom: 12px; align-items: start;">
+                        <div style="flex-shrink: 0;">
+                            ${profileImageUrl ?
+                        `<img src="${profileImageUrl}" alt="${voice.name}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border, #e2e8f0);" />` :
+                        `<div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem; font-weight: bold; border: 2px solid var(--border, #e2e8f0);">${voice.name.charAt(0).toUpperCase()}</div>`
+                    }
                         </div>
-                        <span class="badge">${engineLabel}</span>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; gap: 8px; margin-bottom: 4px;">
+                                <h3 style="margin: 0; font-size: 1.1rem; font-weight: 600;">${voice.name}</h3>
+                                <span class="badge">${engineLabel}</span>
+                            </div>
+                            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">
+                                <span style="font-size: 0.85rem; color: var(--text-muted);">${genderIcon} ${gender.charAt(0).toUpperCase() + gender.slice(1)}</span>
+                                <span style="color: var(--text-muted);">•</span>
+                                <span style="font-size: 0.85rem; color: var(--text-muted);">${duration ? `${duration}` : ''}</span>
+                            </div>
+                            ${bio ? `<p style="margin: 0; font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;">${bio}</p>` : '<p style="margin: 0; font-size: 0.85rem; color: var(--text-muted); font-style: italic;">No bio added yet</p>'}
+                        </div>
                     </div>
-                    ${(voice.tags && voice.tags.length) ? `<div class="tag-list">${voice.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</div>` : ''}
-                    <div class="voice-card__actions">
-                        <button class="primary-btn" style="flex:1;" onclick="testVoice('${voice.id}')">▶ Test</button>
-                        <button class="secondary-btn" style="flex:0 0 auto; padding:10px 12px;" onclick="openEditPanel('${voice.id}')">✎</button>
-                        <button class="danger-btn" style="flex:0 0 auto; padding:10px 16px;" onclick="deleteVoice('${voice.id}')">🗑</button>
+
+                    <!-- Tags -->
+                    ${(voice.tags && voice.tags.length) ? `<div class="tag-list" style="margin-bottom: 12px;">${voice.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</div>` : ''}
+
+                    <!-- Audio Players -->
+                    ${referenceUrl ? `
+                        <div style="margin: 12px 0 8px 0;">
+                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; font-weight: 500;">📎 Reference Audio</div>
+                            <audio controls src="${referenceUrl}" style="width: 100%; height: 32px; border-radius: 6px;" preload="none"></audio>
+                        </div>
+                    ` : ''}
+                    ${voice.latestSample ? `
+                        <div style="margin: 8px 0;">
+                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; font-weight: 500;">🎤 Latest Generated Sample</div>
+                            <audio controls src="${voice.latestSample.url}" style="width: 100%; height: 32px; border-radius: 6px;" preload="none"></audio>
+                        </div>
+                    ` : '<div style="margin: 8px 0; padding: 8px; background: var(--bg-muted, #f8f9fa); border-radius: 6px; font-size: 0.8rem; color: var(--text-muted); text-align: center;">No samples yet - click Clone to generate</div>'}
+
+                    <!-- Actions -->
+                    <div class="voice-card__actions" style="margin-top: 12px; display: flex; gap: 8px;">
+                        <button class="primary-btn" style="flex: 4;" onclick="testVoice('${voice.id}')">▶ Clone</button>
+                        <button class="secondary-btn" style="flex: 4;" onclick="openEditPanel('${voice.id}')">✎ Edit</button>
+                        <button class="danger-btn" style="flex: 2; padding: 8px;" onclick="deleteVoice('${voice.id}')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                <line x1="10" y1="11" x2="10" y2="17"></line>
+                                <line x1="14" y1="11" x2="14" y2="17"></line>
+                            </svg>
+                        </button>
                     </div>
                 </article>`;
             }).join('');
         }
 
-        function searchVoices() {
+        async function searchVoices() {
             const query = document.getElementById('search-input').value.toLowerCase();
-            const filtered = voices.filter(v =>
+            const sortBy = document.getElementById('sort-select').value;
+
+            let filtered = voices.filter(v =>
                 v.name.toLowerCase().includes(query) ||
+                (v.bio || '').toLowerCase().includes(query) ||
+                (v.gender || '').toLowerCase().includes(query) ||
                 (v.tags || []).some(tag => tag.toLowerCase().includes(query))
             );
-            renderVoices(filtered);
+
+            // Apply engine filter
+            if (selectedEngineFilter !== 'all') {
+                filtered = filtered.filter(v => (v.engine || '').toLowerCase() === selectedEngineFilter);
+            }
+
+            // Apply sorting
+            filtered.sort((a, b) => {
+                switch (sortBy) {
+                    case 'name-asc':
+                        return a.name.localeCompare(b.name);
+                    case 'name-desc':
+                        return b.name.localeCompare(a.name);
+                    case 'date-desc':
+                        return (b.created_at || '').localeCompare(a.created_at || '');
+                    case 'date-asc':
+                        return (a.created_at || '').localeCompare(b.created_at || '');
+                    case 'engine-asc':
+                        return (a.engine || '').localeCompare(b.engine || '');
+                    case 'duration-desc':
+                        return (b.duration_seconds || 0) - (a.duration_seconds || 0);
+                    case 'duration-asc':
+                        return (a.duration_seconds || 0) - (b.duration_seconds || 0);
+                    default:
+                        return 0;
+                }
+            });
+
+            await renderVoices(filtered);
+        }
+
+        function filterByEngine(engine) {
+            selectedEngineFilter = engine;
+            // Update button states
+            document.querySelectorAll('.tag-filter').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.engine === engine);
+            });
+            searchVoices(); // Reapply current search with new filter
+        }
+
+        async function bulkToggleVisibility(makeVisible) {
+            if (!currentFilteredVoices.length) {
+                showToast('No voices to update', 'warning');
+                return;
+            }
+
+            const action = makeVisible ? 'show' : 'hide';
+            const count = currentFilteredVoices.length;
+
+            const confirmed = await showConfirm(
+                `${action.charAt(0).toUpperCase() + action.slice(1)} ${count} voice(s)?`,
+                `This will ${action} ${count} voice(s) from the Studio page character selection dropdowns.`
+            );
+
+            if (!confirmed) return;
+
+            let successCount = 0;
+            let failCount = 0;
+
+            // Update each voice
+            for (const voice of currentFilteredVoices) {
+                try {
+                    const response = await fetch(`${API_URL}/voices/${voice.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ visible: makeVisible })
+                    });
+
+                    if (response.ok) {
+                        successCount++;
+                        // Update local cache
+                        const voiceInCache = voices.find(v => v.id === voice.id);
+                        if (voiceInCache) {
+                            voiceInCache.visible = makeVisible;
+                        }
+                    } else {
+                        failCount++;
+                    }
+                } catch (error) {
+                    console.error(`Failed to update ${voice.name}:`, error);
+                    failCount++;
+                }
+            }
+
+            // Refresh the display
+            await searchVoices();
+
+            // Show result
+            const msg = `Updated ${successCount} voice(s)${failCount > 0 ? `. ${failCount} failed` : ''}`;
+            showToast(msg, failCount > 0 ? 'warning' : 'success');
         }
 
         function testVoice(voiceId) {
@@ -339,7 +932,10 @@
             if (!currentTestVoice) return;
 
             const text = document.getElementById('test-text').value.trim();
-            if (!text) return alert('Enter text to test.');
+            if (!text) {
+                showToast('Please enter text to test', 'warning');
+                return;
+            }
 
             const resultDiv = document.getElementById('test-result');
             resultDiv.textContent = 'Generating...';
@@ -369,19 +965,30 @@
                 // Refresh samples list to show the new one
                 loadVoiceSamples(currentTestVoice.id);
 
+                // Refresh voice grid to update the card with the new sample
+                loadVoices();
+
             } catch (error) {
                 resultDiv.textContent = `Error: ${error.message}`;
             }
         }
 
         async function deleteVoice(voiceId) {
-            if (!confirm('Delete this voice permanently?')) return;
+            const voice = voices.find(v => v.id === voiceId);
+            const confirmed = await showConfirm(
+                'Delete voice permanently?',
+                `This will permanently delete "${voice?.name || 'this voice'}" and cannot be undone.`
+            );
+
+            if (!confirmed) return;
+
             try {
                 const response = await fetch(`${API_URL}/voices/${voiceId}`, { method: 'DELETE' });
                 if (!response.ok) throw new Error('Failed to delete voice');
+                showToast('Voice deleted successfully', 'success');
                 loadVoices();
             } catch (error) {
-                alert(error.message);
+                showToast(`Delete failed: ${error.message}`, 'error');
             }
         }
 
@@ -412,7 +1019,7 @@
             chunkQueue = [];
             if (currentSource) {
                 currentSource.onended = null;
-                try { currentSource.stop(); } catch (e) {}
+                try { currentSource.stop(); } catch (e) { }
                 currentSource.disconnect();
                 currentSource = null;
             }
@@ -421,12 +1028,12 @@
 
         async function streamTestVoice() {
             if (!currentTestVoice) {
-                alert('Select a voice first.');
+                showToast('Please select a voice first', 'warning');
                 return;
             }
             const text = document.getElementById('test-text').value.trim();
             if (!text) {
-                alert('Enter some text to stream.');
+                showToast('Please enter some text to stream', 'warning');
                 return;
             }
             stopStreaming();
@@ -544,8 +1151,11 @@
             currentEditVoice = voice;
             document.getElementById('edit-panel').style.display = 'block';
             document.getElementById('edit-name').value = voice.name || '';
+            document.getElementById('edit-bio').value = voice.bio || '';
             document.getElementById('edit-tags').value = (voice.tags || []).join(', ');
+            document.getElementById('edit-gender').value = voice.gender || 'neutral';
             document.getElementById('edit-engine').value = voice.engine || 'styletts2';
+            document.getElementById('edit-visible').checked = voice.visible !== false; // Default to visible
             document.getElementById('edit-result').textContent = '';
         }
 
@@ -558,8 +1168,11 @@
             if (!currentEditVoice) return;
             const payload = {
                 name: document.getElementById('edit-name').value.trim(),
+                bio: document.getElementById('edit-bio').value.trim(),
                 tags: document.getElementById('edit-tags').value.split(',').map(t => t.trim()).filter(Boolean),
-                engine: document.getElementById('edit-engine').value
+                gender: document.getElementById('edit-gender').value,
+                engine: document.getElementById('edit-engine').value,
+                visible: document.getElementById('edit-visible').checked
             };
             try {
                 const response = await fetch(`${API_URL}/voices/${currentEditVoice.id}`, {
@@ -573,7 +1186,7 @@
                 }
                 document.getElementById('edit-result').textContent = 'Saved!';
                 await loadVoices();
-                closeEditPanel();
+                setTimeout(() => closeEditPanel(), 1000);
             } catch (error) {
                 document.getElementById('edit-result').textContent = `Error: ${error.message}`;
             }
@@ -583,6 +1196,45 @@
         window.closeEditPanel = closeEditPanel;
         window.saveEditVoice = saveEditVoice;
 
+        // Menu toggle
+        function toggleMenu() {
+            const menu = document.getElementById('menu-dropdown');
+            menu.classList.toggle('active');
+        }
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('menu-dropdown');
+            const burgerBtn = document.querySelector('.burger-menu');
+            if (menu && !menu.contains(e.target) && e.target !== burgerBtn) {
+                menu.classList.remove('active');
+            }
+        });
+
+        // Dark mode functions
+        function toggleDarkMode() {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            localStorage.setItem('darkMode', isLight ? 'disabled' : 'enabled');
+
+            const toggle = document.querySelector('.dark-mode-toggle');
+            toggle.textContent = isLight ? '🌙' : '☀️';
+        }
+
+        function initDarkMode() {
+            const darkMode = localStorage.getItem('darkMode');
+            if (darkMode === 'disabled') {
+                document.body.classList.add('light-mode');
+                const toggle = document.querySelector('.dark-mode-toggle');
+                if (toggle) toggle.textContent = '🌙';
+            } else {
+                const toggle = document.querySelector('.dark-mode-toggle');
+                if (toggle) toggle.textContent = '☀️';
+            }
+        }
+
+        // Initialize dark mode on page load
+        initDarkMode();
         loadVoices();
     </script>
 </body>

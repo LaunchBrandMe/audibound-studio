@@ -8,27 +8,185 @@
     <style>
         :root {
             font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            color: #111827;
-            background-color: #f3f4f6;
+            --bg-primary: #FFF7EC;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f3f4f6;
+            --border-color: #e5d4c1;
+            --text-primary: #121A2F;
+            --text-secondary: #5a6478;
+            --text-muted: #9ca3af;
+            --accent-primary: #A83AFA;
+            --accent-primary-hover: #6C22FA;
+            --accent-primary-light: #f3e8ff;
+            --accent-pink: #FF2FAD;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            color: var(--text-primary);
+            background-color: var(--bg-primary);
         }
 
         body {
             margin: 0;
-            padding: 24px;
-            background: #f3f4f6;
+            padding: 0;
+            background: var(--bg-primary);
+            transition: background-color 0.3s ease;
         }
 
-        h1 {
+        /* Dark Mode */
+        body.dark-mode {
+            --bg-primary: #000000;
+            --bg-secondary: #121A2F;
+            --bg-tertiary: #1a2338;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-primary: #FFF7EC;
+            --text-secondary: rgba(255, 247, 236, 0.7);
+            --text-muted: #94a3b8;
+            --accent-primary: #A83AFA;
+            --accent-primary-hover: #FF2FAD;
+            --accent-primary-light: rgba(168, 58, 250, 0.15);
+            --accent-pink: #FF2FAD;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            background: radial-gradient(circle at top left, rgba(168, 58, 250, 0.1), transparent 50%),
+                radial-gradient(circle at bottom right, rgba(255, 47, 173, 0.08), transparent 50%),
+                #000000;
+            color: var(--text-primary);
+        }
+
+        /* Universal Dark Mode Overrides - Force all backgrounds and text to use variables */
+        body.dark-mode * {
+            border-color: var(--border-color);
+        }
+
+        body.dark-mode h1,
+        body.dark-mode h2,
+        body.dark-mode h3,
+        body.dark-mode h4,
+        body.dark-mode h5,
+        body.dark-mode h6,
+        body.dark-mode p,
+        body.dark-mode div,
+        body.dark-mode span,
+        body.dark-mode label,
+        body.dark-mode li {
+            color: var(--text-primary);
+        }
+
+        body.dark-mode input,
+        body.dark-mode select,
+        body.dark-mode textarea {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+
+        body.dark-mode input::placeholder,
+        body.dark-mode textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
             margin-top: 0;
         }
 
-        .layout {
-            max-width: 1200px;
-            margin: 0 auto;
+        /* Top Navigation Bar */
+        .top-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            transition: background-color 0.3s ease;
+        }
+
+        .top-nav-left {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .logo img {
+            height: 32px;
+            transition: filter 0.3s ease;
+        }
+
+        .logo span {
+            margin-bottom: -7px;
+        }
+
+        /* Logo - invert to white text in dark mode */
+        body.dark-mode .logo img {
+            filter: brightness(0) invert(1);
+        }
+
+        .top-nav-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        /* Main layout */
+        .main-container {
+            display: flex;
+            margin-top: 64px;
+            height: calc(100vh - 64px);
+        }
+
+        .left-panel {
+            width: 280px;
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            padding: 20px;
+            background: var(--bg-secondary);
+            transition: background-color 0.3s ease;
+        }
+
+        .right-panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+            background: var(--bg-secondary);
+            position: relative;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Dark Mode Toggle */
+        .dark-mode-toggle {
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s ease;
+        }
+
+        .dark-mode-toggle:hover {
+            background: var(--border-color);
         }
 
         .card {
-            background: #fff;
+            background: var(--bg-secondary);
             border-radius: 12px;
             padding: 20px;
             margin-bottom: 18px;
@@ -42,9 +200,11 @@
             width: 100%;
             padding: 10px 12px;
             border-radius: 8px;
-            border: 1px solid #d1d5db;
+            border: 1px solid var(--border-color);
             margin-bottom: 12px;
             box-sizing: border-box;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
         }
 
         textarea {
@@ -55,20 +215,51 @@
             font: inherit;
             border: none;
             border-radius: 8px;
-            padding: 10px 16px;
-            background: #2563eb;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, var(--accent-pink), var(--accent-primary));
             color: #fff;
             cursor: pointer;
-            transition: background 0.2s ease;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            font-size: 0.95rem;
         }
 
         button:hover {
-            background: #1e40af;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-primary-hover));
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 47, 173, 0.35);
         }
 
         button:disabled {
             background: #94a3b8;
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-secondary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .btn-icon {
+            padding: 8px 12px;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-icon:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            transform: none;
+            box-shadow: none;
         }
 
         .tabs {
@@ -82,12 +273,12 @@
             border-radius: 999px;
             border: 1px solid transparent;
             cursor: pointer;
-            background: #e0e7ff;
-            color: #1d4ed8;
+            background: var(--accent-primary-light);
+            color: var(--accent-primary);
         }
 
         .tab.active {
-            background: #1d4ed8;
+            background: linear-gradient(135deg, var(--accent-pink), var(--accent-primary));
             color: #fff;
         }
 
@@ -98,18 +289,18 @@
         }
 
         .list {
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 12px;
-            background: #f8fafc;
+            background: var(--bg-tertiary);
         }
 
         .list-item {
             padding: 12px;
             border-radius: 10px;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-color);
             margin-bottom: 10px;
-            background: #fff;
+            background: var(--bg-secondary);
         }
 
         .list-item:last-child {
@@ -118,68 +309,92 @@
 
         .small {
             font-size: 0.9rem;
-            color: #475569;
+            color: var(--text-secondary);
         }
 
         .muted {
-            color: #6b7280;
+            color: var(--text-secondary);
         }
 
         .history-entry {
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
+            gap: 8px;
             font-size: 0.9rem;
-            border-bottom: 1px solid #e2e8f0;
-            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 0;
         }
 
         .history-entry:last-child {
             border-bottom: none;
         }
 
+        .history-entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .history-entry-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
         .pill {
             padding: 2px 8px;
             border-radius: 999px;
             font-size: 0.75rem;
-            background: #e0f2fe;
-            color: #0369a1;
+            background: var(--accent-primary-light);
+            color: var(--accent-primary);
         }
 
         .flash {
             border-radius: 10px;
             padding: 12px 16px;
             margin: 10px 0 20px;
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            color: #1d4ed8;
+            background: var(--accent-primary-light);
+            border: 1px solid rgba(168, 58, 250, 0.3);
+            color: var(--accent-primary);
             display: none;
         }
 
         .flash.error {
-            background: #fef2f2;
-            border-color: #fecaca;
-            color: #dc2626;
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        body.dark-mode .flash.error {
+            background: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
         }
 
         .flash.success {
-            background: #ecfdf5;
-            border-color: #bbf7d0;
-            color: #15803d;
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        body.dark-mode .flash.success {
+            background: rgba(16, 185, 129, 0.15);
+            color: #6ee7b7;
         }
 
         .custom-style {
             display: none;
             width: 100%;
             padding: 8px 10px;
-            border: 1px solid #d1d5db;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
         }
 
         .spinner {
             width: 16px;
             height: 16px;
-            border: 2px solid #bfdbfe;
-            border-top-color: #2563eb;
+            border: 2px solid rgba(168, 58, 250, 0.2);
+            border-top-color: var(--accent-primary);
             border-radius: 50%;
             display: inline-block;
             animation: spin 0.8s linear infinite;
@@ -192,6 +407,111 @@
             }
         }
 
+        /* Custom Audio Player */
+        .audio-player-container {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            min-width: 400px;
+            max-width: 600px;
+            display: none;
+        }
+
+        .audio-player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .audio-player-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+
+        .audio-player-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px 8px;
+            font-size: 1.1rem;
+            transition: color 0.2s;
+        }
+
+        .audio-player-close:hover {
+            color: var(--text-primary);
+        }
+
+        .audio-player-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .audio-player-btn {
+            background: linear-gradient(135deg, var(--accent-pink), var(--accent-primary));
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .audio-player-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(255, 47, 173, 0.4);
+        }
+
+        .audio-player-progress {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .audio-player-times {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .audio-player-track {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .audio-player-track-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-pink), var(--accent-primary));
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
         .panel-header {
             display: flex;
             justify-content: space-between;
@@ -200,8 +520,8 @@
         }
 
         .score-card {
-            border: 1px solid #dbeafe;
-            background: #eff6ff;
+            border: 1px solid rgba(168, 58, 250, 0.2);
+            background: var(--accent-primary-light);
             border-radius: 12px;
             padding: 12px;
             margin-top: 12px;
@@ -211,28 +531,176 @@
             margin-top: 8px;
             padding-left: 18px;
         }
+
+        .project-compact-card {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+
+        .project-compact-card:hover {
+            background: rgba(168, 58, 250, 0.08);
+            border-color: rgba(168, 58, 250, 0.3);
+        }
+
+        .project-compact-card.active {
+            background: var(--accent-primary-light);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(168, 58, 250, 0.15);
+        }
+
+        /* Floating Control Panel */
+        .control-panel {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            border: 1px solid var(--border-color);
+            max-width: 400px;
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+            z-index: 50;
+        }
+
+        .control-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .control-panel-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 1.2rem;
+        }
+
+        .script-content {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 24px;
+            min-height: calc(100vh - 100px);
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+        }
+
+        /* Script Editor - Clean & Simple Textarea */
+        #script-editor {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', system-ui, sans-serif;
+            font-size: 1.05rem;
+            line-height: 1.8;
+            color: var(--text-primary);
+            background-color: var(--bg-secondary);
+            padding: 40px;
+            min-height: 100vh;
+            outline: none;
+            border: none;
+            box-sizing: border-box;
+            display: block;
+            width: 100%;
+            resize: none;
+            overflow-y: auto;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        #script-editor::placeholder {
+            color: var(--text-muted);
+        }
     </style>
 </head>
 
 <body>
-    <div class="layout">
-        <h1>Audibound Studio</h1>
-        <div id="flash" class="flash"></div>
+    <!-- Top Navigation Bar -->
+    <div class="top-nav">
+        <div class="top-nav-left">
+            <div class="logo">
+                <img src="/static/logo.png" alt="Audibound Studio">
+                <span>Studio</span>
+            </div>
+        </div>
+        <div class="top-nav-actions">
+            <button id="new-project-btn" onclick="startNewProject()">+ New Project</button>
+            <button id="save-project-btn" onclick="createProject()" style="display: none;">Save Project</button>
+            <button class="dark-mode-toggle" onclick="toggleDarkMode()" title="Toggle dark mode">🌙</button>
+            <a href="/static/multitrack_player.html"
+                style="text-decoration: none; color: var(--text-secondary); font-size: 0.95rem; display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 8px; transition: all 0.2s ease;">
+                <span>▶</span> Player
+            </a>
+        </div>
+    </div>
 
-        <div class="card">
-            <h2>Create a project</h2>
-            <input type="text" id="title" placeholder="Project Title" />
-            <textarea id="text" rows="6" placeholder="Paste story text here..."></textarea>
-            <button onclick="createProject()">Create Project</button>
+    <!-- Flash Messages -->
+    <div id="flash" class="flash"
+        style="position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 200; min-width: 300px;">
+    </div>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- LEFT PANEL - Project List -->
+        <div class="left-panel">
+            <h3
+                style="margin-bottom: 16px; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary);">
+                Projects</h3>
+            <div id="projects" class="projects-empty" style="font-size: 0.9rem; color: var(--text-secondary);">No
+                projects yet.</div>
         </div>
 
-        <div id="global-outputs" class="card"></div>
+        <!-- RIGHT PANEL - Script Editor + Controls -->
+        <div class="right-panel">
+            <textarea id="script-editor" placeholder="# Project Title
 
-        <div id="projects" class="projects-empty">No projects yet. Create one to get started.</div>
+Paste your story here..."></textarea>
+
+            <!-- Text Stats Display -->
+            <div id="script-stats"
+                style="padding: 8px 12px; font-size: 0.85rem; color: var(--muted); font-family: monospace; background: var(--bg-alt); border-top: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span id="script-char-count">0 characters</span> • <span id="script-word-count">0 words</span>
+                    </div>
+                    <div id="cost-estimate" style="font-weight: 600;">
+                        <span id="cost-range" style="color: var(--accent-primary);">💰 $0.00</span>
+                        <button id="cost-breakdown-toggle" onclick="toggleCostBreakdown()"
+                            style="margin-left: 8px; padding: 2px 8px; font-size: 0.75rem; background: rgba(168, 58, 250, 0.1); border: 1px solid var(--accent-primary); border-radius: 4px; color: var(--accent-primary); cursor: pointer;">▸</button>
+                    </div>
+                </div>
+                <div id="cost-breakdown"
+                    style="display: none; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); font-size: 0.8rem;">
+                    <div id="cost-details"></div>
+                </div>
+            </div>
+
+            <!-- Floating Control Panel -->
+            <div id="control-panel" style="display: none;"></div>
+        </div>
     </div>
 
     <script>
         const API_URL = "";
+
+        // Cost rate configuration (per 1000 characters)
+        const COST_RATES = {
+            kokoro: { min: 0.01, max: 0.02, label: "Kokoro" },
+            kokoro_multi: { min: 0.01, max: 0.02, label: "Kokoro" },
+            kokoro_single: { min: 0.01, max: 0.02, label: "Kokoro" },
+            indextts2: { min: 0.06, max: 0.06, label: "IndexTTS2" },
+            styletts2: { min: 0.06, max: 0.06, label: "StyleTTS2" },
+            dia: { min: 0.05, max: 0.05, label: "DiaTTS" },
+            sesame: { min: 0.04, max: 0.04, label: "Sesame" },
+            // Layer costs (estimated per minute of audio, ~200 words/min)
+            music: { min: 0.01, max: 0.03, label: "Music" },
+            sfx: { min: 0.005, max: 0.01, label: "SFX" }
+        };
+
         const ENGINE_OPTIONS = [
             { value: "kokoro_multi", label: "Kokoro (multi-voice)" },
             { value: "kokoro_single", label: "Kokoro (single voice preview)" },
@@ -244,6 +712,7 @@
         const projectOrder = [];
         const projectPollers = {};
         let globalOutputs = [];
+        let currentOpenProject = null;
         const STYLE_OPTIONS = [
             'neutral', 'calm', 'joyful', 'excited', 'angry', 'furious', 'sad', 'melancholy', 'tired', 'somber', 'whispering', 'soft', 'urgent', 'surprised'
         ];
@@ -273,6 +742,7 @@
                     availableVoices: data.available_voices || {},
                     validation_summary: data.validation_summary || null,
                     loadingAction: null,
+                    raw_text: data.raw_text || '',
                     productionOptions: {
                         include_voice: true,
                         include_sfx: true,
@@ -280,7 +750,7 @@
                         reuse_voice_cache: true,
                     },
                 };
-                projectOrder.unshift(id);
+                projectOrder.push(id);
             }
             const project = projectStore[id];
             if (data.title !== undefined) project.title = data.title || project.title;
@@ -294,6 +764,7 @@
             if (data.render_history !== undefined) project.render_history = data.render_history || [];
             if (data.voice_overrides !== undefined) project.voice_overrides = data.voice_overrides || {};
             if (data.validation_summary !== undefined) project.validation_summary = data.validation_summary || null;
+            if (data.raw_text !== undefined) project.raw_text = data.raw_text;
             project.updated_at = new Date().toLocaleTimeString();
             return project;
         }
@@ -315,32 +786,109 @@
                 return;
             }
             container.className = '';
-            container.innerHTML = projectOrder.map(id => renderProjectCard(projectStore[id])).join('');
+            container.innerHTML = projectOrder.map(id => renderProjectCompactCard(projectStore[id])).join('');
         }
 
-        function renderProjectCard(project) {
+        function renderProjectCompactCard(project) {
             if (!project) return '';
+            const isActive = currentOpenProject === project.project_id;
+            const statusColors = {
+                'created': '#6b7280',
+                'directed': '#A83AFA',
+                'produced': '#10b981',
+                'error': '#ef4444'
+            };
+            const statusColor = statusColors[project.status] || '#6b7280';
+            return `
+                <div class="project-compact-card ${isActive ? 'active' : ''}" onclick="openProject('${project.project_id}')">
+                    <div style="margin-bottom: 4px; font-weight: 600; font-size: 0.95rem;">${project.title}</div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${statusColor};"></span>
+                        <span style="font-size: 0.8rem; text-transform: capitalize; opacity: 0.7;">${project.status}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function openProject(projectId) {
+            currentOpenProject = projectId;
+
+            // Load full project data from API (includes render history, characters, etc.)
+            await loadProject(projectId, { silent: true, skipRefresh: true });
+
+            const project = projectStore[projectId];
+            if (!project) return;
+
+            // Update project list highlighting
+            renderProjects();
+
+            // Display script in RIGHT panel editor
+            const editor = document.getElementById('script-editor');
+            const scriptContent = `# ${project.title}\n\n${project.raw_text || ''}`;
+            editor.value = scriptContent;
+
+            // Show floating control panel
+            const controlPanel = document.getElementById('control-panel');
+            controlPanel.style.display = 'block';
+            controlPanel.className = 'control-panel';
+            controlPanel.innerHTML = renderFloatingControls(project);
+        }
+
+        function renderFloatingControls(project) {
             const tabs = `
                 <div class="tabs">
                     <div class="tab ${project.tab === 'direction' ? 'active' : ''}" onclick="switchTab('${project.project_id}','direction')">Direction</div>
                     <div class="tab ${project.tab === 'production' ? 'active' : ''}" onclick="switchTab('${project.project_id}','production')">Production</div>
                 </div>
             `;
-            const directionView = renderDirectionView(project);
-            const productionView = renderProductionView(project);
+
+            const content = project.tab === 'direction' ? renderDirectionView(project) : renderProductionView(project);
+
             return `
-                <div class="card" data-project="${project.project_id}">
-                    <div class="panel-header">
-                        <div>
-                            <h3 style="margin:0;">${project.title}</h3>
-                            <p class="small">Status: <strong>${project.status}</strong></p>
-                        </div>
-                        <div>
-                            <span class="pill">ID: ${project.project_id.slice(0, 8)}…</span>
-                        </div>
-                    </div>
-                    ${tabs}
-                    ${project.tab === 'direction' ? directionView : productionView}
+                <div class="control-panel-header">
+                    <h3 style="margin: 0; font-size: 1.1rem;">${project.title}</h3>
+                    <button class="control-panel-close" onclick="closeControlPanel()">✕</button>
+                </div>
+                ${tabs}
+                ${content}
+            `;
+        }
+
+        function closeControlPanel() {
+            document.getElementById('control-panel').style.display = 'none';
+        }
+
+        function startNewProject() {
+            // Deselect current project
+            currentOpenProject = null;
+
+            // Clear the editor
+            const editor = document.getElementById('script-editor');
+            editor.value = '';
+            editor.dispatchEvent(new Event('input')); // Update stats
+
+            // Close control panel if open
+            closeControlPanel();
+
+            // Update project list to remove active state
+            renderProjects();
+
+            // Toggle buttons: hide "New Project", show "Save Project"
+            document.getElementById('new-project-btn').style.display = 'none';
+            document.getElementById('save-project-btn').style.display = 'block';
+
+            // Focus the editor
+            editor.focus();
+
+            showFlash('Enter your script content, then click "Save Project"', 'info');
+        }
+
+        function renderScriptContent(project) {
+            const scriptText = project.raw_text || '';
+            return `
+                <div class="script-content">
+                    <h3 style="margin:0 0 16px 0;">${project.title}</h3>
+                    <div class="script-text">${scriptText}</div>
                 </div>
             `;
         }
@@ -352,7 +900,7 @@
                     <strong>Quality Score: ${validation.score}/100</strong>
                     ${validation.issues && validation.issues.length ? `<div class="issues"><strong>Issues:</strong><ul>${validation.issues.map(i => `<li>${i}</li>`).join('')}</ul></div>` : ''}
                     ${validation.warnings && validation.warnings.length ? `<div class="issues"><strong>Warnings:</strong><ul>${validation.warnings.map(i => `<li>${i}</li>`).join('')}</ul></div>` : ''}
-                    ${validation.clarifications && validation.clarifications.length ? `<div class="issues"><strong>Needs clarification (click to copy):</strong><ul>${validation.clarifications.map((c, idx) => `<li><button style="padding:4px 8px; margin-right:6px; background:#e0e7ff; color:#1d4ed8; border:none; border-radius:6px; cursor:pointer;" onclick="copyText('${project.project_id}', ${idx})">Copy</button> [Block ${c.block_index}] ${c.reason}: “${c.text.replace(/"/g, '&quot;')}”</li>`).join('')}</ul></div>` : ''}
+                    ${validation.clarifications && validation.clarifications.length ? `<div class="issues"><strong>Needs clarification (click to copy):</strong><ul>${validation.clarifications.map((c, idx) => `<li><button style="padding:4px 8px; margin-right:6px; background:#e0e7ff; color:#1d4ed8; border:none; border-radius:6px; cursor:pointer;" onclick="copyText('${project.project_id}', ${idx})">Copy</button> [Line ${c.block_index + 1}] ${c.reason}: "${c.text.replace(/"/g, '&quot;')}"</li>`).join('')}</ul></div>` : ''}
                 </div>`
                 : '<p class="muted">Run Direct Script to generate the character breakdown and quality score.</p>';
 
@@ -363,28 +911,15 @@
             const directing = project.loadingAction === 'direct';
             return `
                 <div>
-                    <div class="panel-header" style="margin-bottom:12px;">
-                        <div>
-                            <p class="small">Current status: ${project.status}</p>
-                        </div>
-                        <div>
-                            <button onclick="triggerAction('${project.project_id}', 'direct')" ${directing ? 'disabled' : ''}>
-                                ${directing ? '<span class="spinner"></span>Directing…' : 'Direct Script'}
-                            </button>
-                        </div>
-                    </div>
+                    <button onclick="triggerAction('${project.project_id}', 'direct')" ${directing ? 'disabled' : ''} style="width:100%; margin-bottom:16px;">
+                        ${directing ? '<span class="spinner"></span>Directing…' : 'Direct Script'}
+                    </button>
                     ${validationCard}
-                    <div class="two-column" style="margin-top:16px;">
-                        <div>
-                            <h4>Characters</h4>
-                            ${characters}
-                            ${project.characters && project.characters.length ? '<button onclick="saveOverrides(\'' + project.project_id + '\')">Save Direction Changes</button>' : ''}
-                        </div>
-                        <div>
-                            <h4>Recent activity</h4>
-                            ${renderEvents(project)}
-                        </div>
-                    </div>
+                    <h4>Characters</h4>
+                    ${characters}
+                    ${project.characters && project.characters.length ? '<button onclick="saveOverrides(\'' + project.project_id + '\')" style="width:100%; margin-top:12px;">Save Direction Changes</button>' : ''}
+                    <h4 style="margin-top:24px;">Recent activity</h4>
+                    ${renderEvents(project)}
                 </div>
             `;
         }
@@ -408,15 +943,9 @@
 
                 const optionItems = [`<option value="" ${defaultSelected}>Use ${defaultVoiceDisplay}</option>`]
                     .concat(Object.entries(voices).map(([id, label]) => {
-                        // Parse voice ID to display friendly format
-                        let displayText = id;
-                        if (id.includes(':')) {
-                            const [engine, voiceId] = id.split(':', 2);
-                            const engineName = engine.charAt(0).toUpperCase() + engine.slice(1);
-                            displayText = `${voiceId} (${engineName})`;
-                        }
-                        displayText += ` — ${label}`;
-                        return `<option value="${id}" ${hasOverride && currentVoice === id ? 'selected' : ''}>${displayText}</option>`;
+                        // Backend now returns pre-formatted strings for all voices
+                        // Just use the label directly
+                        return `<option value="${id}" ${hasOverride && currentVoice === id ? 'selected' : ''}>${label}</option>`;
                     }))
                     .join('');
                 return `
@@ -441,54 +970,53 @@
             const history = (project.render_history && project.render_history.length)
                 ? project.render_history.map(entry => `
                     <div class="history-entry">
-                        <span>${entry.timestamp} — ${entry.engine} ${entry.layers ? ' · ' + entry.layers.join(' / ') : ''}</span>
-                        <div style="display:flex; gap:8px;">
-                            ${entry.output_path ? `
-                                <button onclick="playAudio('${entry.output_path}')" style="padding:4px 10px; font-size:0.85rem;">▶ Play</button>
-                                <a href="${entry.output_path}" download style="padding:4px 10px; background:#10b981; color:#fff; border-radius:6px; text-decoration:none; font-size:0.85rem;">⬇ Download</a>
-                            ` : '<span class="muted">Pending</span>'}
-                        </div>
-                        ${entry.notes && entry.notes.length ? `<div class="muted small" style="margin-top:4px;">${entry.notes.join(' | ')}</div>` : ''}
-                    </div>`).join('')
-                : '<p class="muted">No productions yet.</p>';
-            return `
-                <div class="two-column">
-                    <div>
-                        <h4>Produce Audio</h4>
-                        <p class="small muted">Engine is automatically detected from character voice assignments</p>
-                        <div class="list" style="margin:12px 0;">
-                            <div class="small" style="margin-bottom:6px;">Layers to render:</div>
-                            <label class="small" style="display:block; margin-bottom:4px;">
-                                <input type="checkbox" ${opts.include_voice ? 'checked' : ''} onchange="setProdOption('${project.project_id}','include_voice', this.checked)"> Voice
-                            </label>
-                            <label class="small" style="display:block; margin-bottom:4px;">
-                                <input type="checkbox" ${opts.include_sfx ? 'checked' : ''} onchange="setProdOption('${project.project_id}','include_sfx', this.checked)"> SFX
-                            </label>
-                            <label class="small" style="display:block; margin-bottom:4px;">
-                                <input type="checkbox" ${opts.include_music ? 'checked' : ''} onchange="setProdOption('${project.project_id}','include_music', this.checked)"> Music
-                            </label>
-                            <label class="small" style="display:block; margin-top:6px;">
-                                <input type="checkbox" ${opts.reuse_voice_cache ? 'checked' : ''} onchange="setProdOption('${project.project_id}','reuse_voice_cache', this.checked)"> Reuse voice cache (skip regen when possible)
-                            </label>
-                            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">
-                                <button style="padding:6px 10px; background:#e5e7eb; color:#111827;" onclick="applyPreset('${project.project_id}','voice')">Voice only</button>
-                                <button style="padding:6px 10px; background:#e5e7eb; color:#111827;" onclick="applyPreset('${project.project_id}','sfx')">SFX only</button>
-                                <button style="padding:6px 10px; background:#e5e7eb; color:#111827;" onclick="applyPreset('${project.project_id}','music')">Music only</button>
-                                <button style="padding:6px 10px; background:#e5e7eb; color:#111827;" onclick="applyPreset('${project.project_id}','all')">All layers</button>
+                        <div class="history-entry-header">
+                            <div>
+                                <div style="font-weight: 500; margin-bottom: 4px;">${entry.timestamp}</div>
+                                <div class="small muted">Detected from disk · ${entry.engine || 'voice'}</div>
+                            </div>
+                            <div class="history-entry-actions">
+                                ${entry.output_path ? `
+                                    <button onclick="playAudio('${entry.output_path}')" style="padding:6px 12px; font-size:0.85rem;">▶ Play</button>
+                                    <a href="${entry.output_path}" download style="padding:6px 12px; background:var(--accent-green); color:#fff; border-radius:6px; text-decoration:none; font-size:0.85rem;">⬇ Download</a>
+                                ` : '<span class="muted small">Pending</span>'}
                             </div>
                         </div>
-                        <div class="flex" style="gap:12px; margin-top:14px; flex-wrap:wrap;">
-                            <button onclick="triggerAction('${project.project_id}', 'produce')" ${project.manifest ? '' : 'disabled title="Run Direct Script first"'} ${project.loadingAction === 'produce' ? 'disabled' : ''}>
-                                ${project.loadingAction === 'produce' ? '<span class="spinner"></span>Producing…' : 'Produce Audio'}
-                            </button>
+                        ${entry.notes && entry.notes.length ? `<div class="muted small">${entry.notes.join(' | ')}</div>` : ''}
+                    </div>`).join('')
+                : '<p class="muted small">No productions yet.</p>';
+            return `
+                <div>
+                    <h4>Produce Audio</h4>
+                    <p class="small muted">Engine is automatically detected from character voice assignments</p>
+                    <div class="list" style="margin:12px 0;">
+                        <div class="small" style="margin-bottom:6px;">Layers to render:</div>
+                        <label class="small" style="display:block; margin-bottom:4px;">
+                            <input type="checkbox" ${opts.include_voice ? 'checked' : ''} onchange="setProdOption('${project.project_id}','include_voice', this.checked)"> Voice
+                        </label>
+                        <label class="small" style="display:block; margin-bottom:4px;">
+                            <input type="checkbox" ${opts.include_sfx ? 'checked' : ''} onchange="setProdOption('${project.project_id}','include_sfx', this.checked)"> SFX
+                        </label>
+                        <label class="small" style="display:block; margin-bottom:4px;">
+                            <input type="checkbox" ${opts.include_music ? 'checked' : ''} onchange="setProdOption('${project.project_id}','include_music', this.checked)"> Music
+                        </label>
+                        <label class="small" style="display:block; margin-top:6px;">
+                            <input type="checkbox" ${opts.reuse_voice_cache ? 'checked' : ''} onchange="setProdOption('${project.project_id}','reuse_voice_cache', this.checked)"> Reuse voice cache (skip regen when possible)
+                        </label>
+                        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">
+                            <button class="btn-secondary" style="padding:6px 10px;" onclick="applyPreset('${project.project_id}','voice')">Voice only</button>
+                            <button class="btn-secondary" style="padding:6px 10px;" onclick="applyPreset('${project.project_id}','sfx')">SFX only</button>
+                            <button class="btn-secondary" style="padding:6px 10px;" onclick="applyPreset('${project.project_id}','music')">Music only</button>
+                            <button class="btn-secondary" style="padding:6px 10px;" onclick="applyPreset('${project.project_id}','all')">All layers</button>
                         </div>
-                        <h4 style="margin-top:20px;">Render History</h4>
-                        <div class="list">${history}</div>
                     </div>
-                    <div>
-                        <h4>Recent activity</h4>
-                        ${renderEvents(project)}
-                    </div>
+                    <button onclick="triggerAction('${project.project_id}', 'produce')" ${project.manifest ? '' : 'disabled title="Run Direct Script first"'} ${project.loadingAction === 'produce' ? 'disabled' : ''} style="width:100%;">
+                        ${project.loadingAction === 'produce' ? '<span class="spinner"></span>Producing…' : 'Produce Audio'}
+                    </button>
+                    <h4 style="margin-top:20px;">Render History</h4>
+                    <div class="list">${history}</div>
+                    <h4 style="margin-top:24px;">Recent activity</h4>
+                    ${renderEvents(project)}
                 </div>
             `;
         }
@@ -501,9 +1029,29 @@
         }
 
         async function createProject() {
-            const title = document.getElementById('title').value.trim();
-            const text = document.getElementById('text').value.trim();
-            if (!title || !text) { showFlash('Title and text are required.', 'error'); return; }
+            const editor = document.getElementById('script-editor');
+            let fullText = editor.value.trim();
+
+            if (!fullText) {
+                showFlash('Please enter some text in the script editor.', 'error');
+                return;
+            }
+
+            // Ensure first line starts with # for title
+            const lines = fullText.split('\n');
+            if (!lines[0].startsWith('#')) {
+                lines[0] = '# ' + lines[0];
+                fullText = lines.join('\n');
+                editor.value = fullText; // Update editor to show the #
+            }
+
+            // Extract title from first line and capitalize first letter
+            let title = lines[0].replace(/^#+\s*/, '').trim() || 'Untitled Project';
+            if (title && title.length > 0) {
+                title = title.charAt(0).toUpperCase() + title.slice(1);
+            }
+            let text = lines.slice(1).join('\n').trim();
+
             showFlash('Creating project…');
             try {
                 const res = await fetch(`${API_URL}/projects`, {
@@ -516,6 +1064,13 @@
                 ensureProjectEntry(data);
                 renderProjects();
                 showFlash('Project created. Run Direct Script to generate direction data.', 'success');
+
+                // Toggle buttons back: show "New Project", hide "Save Project"
+                document.getElementById('new-project-btn').style.display = 'block';
+                document.getElementById('save-project-btn').style.display = 'none';
+
+                // Open the newly created project
+                openProject(data.project_id);
             } catch (err) {
                 showFlash(err.message, 'error');
             }
@@ -525,7 +1080,7 @@
             const project = projectStore[projectId];
             if (!project) return;
             project.tab = tab;
-            renderProjects();
+            openProject(projectId); // Re-render
         }
 
         function updateEngine(projectId, value) {
@@ -536,7 +1091,7 @@
         }
 
         function handleStyleSelect(projectId, characterName, value) {
-            const input = document.querySelector(`[data-custom-style-input=\"${projectId}-${characterName}\"]`);
+            const input = document.querySelector(`[data-custom-style-input="${projectId}-${characterName}"]`);
             if (value.startsWith('custom-')) {
                 if (input) { input.style.display = 'block'; input.focus(); }
             } else {
@@ -547,8 +1102,8 @@
 
         function handleCustomStyleBlur(projectId, characterName, value) {
             updateOverride(projectId, characterName, 'style', value);
-            const selectEl = document.querySelector(`[data-custom-style-select=\"${projectId}-${characterName}\"]`);
-            const input = document.querySelector(`[data-custom-style-input=\"${projectId}-${characterName}\"]`);
+            const selectEl = document.querySelector(`[data-custom-style-select="${projectId}-${characterName}"]`);
+            const input = document.querySelector(`[data-custom-style-input="${projectId}-${characterName}"]`);
             if (value) {
                 if (selectEl) selectEl.value = `custom-${characterName}`;
                 if (input) input.style.display = 'block';
@@ -576,7 +1131,7 @@
                 reuse_voice_cache: true
             };
             project.productionOptions[key] = value;
-            renderProjects();
+            openProject(projectId); // Re-render controls
         }
 
         function applyPreset(projectId, preset) {
@@ -621,19 +1176,84 @@
             }).catch(() => showFlash('Unable to copy.', 'error'));
         }
 
+        // Log cost estimate for production
+        async function logCostEstimate(projectId, engine, opts) {
+            const project = projectStore[projectId];
+            if (!project) return;
+
+            const text = project.raw_text || '';
+            const charCount = text.length;
+            const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+
+            // Extract engines from character assignments
+            const enginesUsed = {};
+            if (project && project.characters && project.characters.length > 0) {
+                // Calculate based on actual character assignments
+                project.characters.forEach(char => {
+                    const voice = char.override_voice || char.default_voice || '';
+                    const charEngine = voice.split(':')[0] || 'kokoro';
+                    enginesUsed[char.name] = charEngine.toLowerCase();
+                });
+            } else {
+                enginesUsed['Default'] = engine.replace('_multi', '').replace('_single', '');
+            }
+
+            // Add SFX and Music engines if those layers are included
+            if (opts.include_sfx) {
+                enginesUsed['SFX Layer'] = 'audiogen';
+            }
+            if (opts.include_music) {
+                enginesUsed['Music Layer'] = 'musicgen';
+            }
+
+            // Calculate estimated cost using same logic as cost estimator
+            const cost = calculateCost(charCount, project);
+
+            // Collect layers
+            const layers = [];
+            if (opts.include_voice) layers.push('voice');
+            if (opts.include_sfx) layers.push('sfx');
+            if (opts.include_music) layers.push('music');
+
+            try {
+                await fetch(`${API_URL}/api/cost-tracking/log`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        project_id: projectId,
+                        project_title: project.title,
+                        character_count: charCount,
+                        word_count: wordCount,
+                        engines_used: enginesUsed,
+                        layers,
+                        estimated_cost: (cost.min + cost.max) / 2, // Use average
+                        estimated_breakdown: {
+                            voice: cost.breakdown,
+                            layers_included: layers
+                        }
+                    })
+                });
+                console.log('[Cost Tracking] Logged production estimate:', cost);
+            } catch (err) {
+                console.error('[Cost Tracking] Failed to log:', err);
+            }
+        }
+
         async function triggerAction(projectId, action) {
             const project = projectStore[projectId];
             if (!project || project.loadingAction) return;
             project.loadingAction = action;
-            renderProjects();
+            openProject(projectId); // Re-render to show loading state
             const humanAction = action === 'direct' ? 'Direction' : 'Production';
             addProjectEvent(projectId, `${humanAction} requested…`);
             const fetchOptions = { method: 'POST' };
             if (action === 'produce') {
-                // Auto-detect engine from character voice assignments
-                // Default to kokoro_multi, but this will be overridden by per-character engines
                 const engine = 'kokoro_multi';
                 const opts = project.productionOptions || { include_voice: true, include_sfx: true, include_music: true, reuse_voice_cache: true };
+
+                // Log cost estimate before producing
+                await logCostEstimate(projectId, engine, opts);
+
                 fetchOptions.headers = { 'Content-Type': 'application/json' };
                 fetchOptions.body = JSON.stringify({
                     engine,
@@ -653,7 +1273,7 @@
                 startPolling(projectId, targetStatus);
             } catch (err) {
                 project.loadingAction = null;
-                renderProjects();
+                openProject(projectId);
                 addProjectEvent(projectId, `⚠️ ${humanAction} failed: ${err.message}`);
             }
         }
@@ -661,27 +1281,24 @@
         function startPolling(projectId, stopStatus) {
             if (projectPollers[projectId]) clearInterval(projectPollers[projectId]);
 
-            // Add a timeout to prevent infinite polling (5 minutes max)
             const startTime = Date.now();
-            const maxDuration = 5 * 60 * 1000; // 5 minutes
+            const maxDuration = 15 * 60 * 1000; // 15 minutes (for long productions with IndexTTS2/music)
 
             projectPollers[projectId] = setInterval(async () => {
                 const data = await loadProject(projectId, { silent: true });
                 const currentStatus = data?.status || projectStore[projectId]?.status;
                 const elapsed = Date.now() - startTime;
 
-                // Stop if we reached the target status OR if we see 'produced'/'directed' (terminal states)
                 const terminalStates = ['produced', 'directed', 'error', 'failed'];
                 const shouldStop = currentStatus === stopStatus || terminalStates.includes(currentStatus);
 
-                // Also stop if we've been polling for too long
                 if (shouldStop || elapsed > maxDuration) {
                     clearInterval(projectPollers[projectId]);
                     delete projectPollers[projectId];
                     const project = projectStore[projectId];
                     if (project) {
                         project.loadingAction = null;
-                        renderProjects();
+                        openProject(projectId);
                         if (elapsed > maxDuration) {
                             addProjectEvent(projectId, '⚠️ Polling timeout - refresh the page to see the latest status');
                         }
@@ -703,6 +1320,10 @@
                         project.loadingAction = null;
                     }
                 }
+                // Only refresh the view if not called from openProject (to prevent infinite loop)
+                if (currentOpenProject === projectId && !options.skipRefresh) {
+                    openProject(projectId); // Refresh view
+                }
                 renderProjects();
                 if (!options.silent) addProjectEvent(projectId, `Status updated to ${data.status}`);
                 return data;
@@ -713,17 +1334,109 @@
         }
 
         function playAudio(audioPath) {
-            // Create or reuse audio player
-            let player = document.getElementById('global-audio-player');
-            if (!player) {
-                player = document.createElement('audio');
-                player.id = 'global-audio-player';
-                player.controls = true;
-                player.style.cssText = 'position:fixed; bottom:20px; right:20px; z-index:1000; border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,0.3);';
-                document.body.appendChild(player);
+            let container = document.getElementById('audio-player-container');
+            let audio = document.getElementById('global-audio-player');
+
+            if (!container) {
+                // Create container
+                container = document.createElement('div');
+                container.id = 'audio-player-container';
+                container.className = 'audio-player-container';
+
+                // Create audio element
+                audio = document.createElement('audio');
+                audio.id = 'global-audio-player';
+
+                // Build player UI
+                container.innerHTML = `
+                    <div class="audio-player-header">
+                        <div class="audio-player-title" id="audio-title">Now Playing</div>
+                        <button class="audio-player-close" onclick="closeAudioPlayer()">✕</button>
+                    </div>
+                    <div class="audio-player-controls">
+                        <button class="audio-player-btn" id="play-pause-btn" onclick="togglePlayPause()">▶</button>
+                        <div class="audio-player-progress">
+                            <div class="audio-player-track" onclick="seekAudio(event)">
+                                <div class="audio-player-track-fill" id="progress-fill"></div>
+                            </div>
+                            <div class="audio-player-times">
+                                <span id="current-time">0:00</span>
+                                <span id="duration-time">0:00</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(container);
+                document.body.appendChild(audio);
+
+                // Add event listeners
+                audio.addEventListener('timeupdate', updateProgress);
+                audio.addEventListener('loadedmetadata', updateDuration);
+                audio.addEventListener('ended', () => {
+                    document.getElementById('play-pause-btn').textContent = '▶';
+                });
             }
-            player.src = audioPath;
-            player.play();
+
+            // Extract filename from path
+            const filename = audioPath.split('/').pop().replace(/\.(mp3|wav|m4a|ogg)$/i, '');
+            document.getElementById('audio-title').textContent = filename;
+
+            // Load and play
+            audio.src = audioPath;
+            audio.play();
+            container.style.display = 'block';
+            document.getElementById('play-pause-btn').textContent = '⏸';
+        }
+
+        function closeAudioPlayer() {
+            const container = document.getElementById('audio-player-container');
+            const audio = document.getElementById('global-audio-player');
+            if (audio) audio.pause();
+            if (container) container.style.display = 'none';
+        }
+
+        function togglePlayPause() {
+            const audio = document.getElementById('global-audio-player');
+            const btn = document.getElementById('play-pause-btn');
+            if (audio.paused) {
+                audio.play();
+                btn.textContent = '⏸';
+            } else {
+                audio.pause();
+                btn.textContent = '▶';
+            }
+        }
+
+        function updateProgress() {
+            const audio = document.getElementById('global-audio-player');
+            const fill = document.getElementById('progress-fill');
+            const currentTime = document.getElementById('current-time');
+
+            const percent = (audio.currentTime / audio.duration) * 100;
+            fill.style.width = percent + '%';
+            currentTime.textContent = formatTime(audio.currentTime);
+        }
+
+        function updateDuration() {
+            const audio = document.getElementById('global-audio-player');
+            const duration = document.getElementById('duration-time');
+            duration.textContent = formatTime(audio.duration);
+        }
+
+        function seekAudio(event) {
+            const audio = document.getElementById('global-audio-player');
+            const track = event.currentTarget;
+            const rect = track.getBoundingClientRect();
+            const percent = (event.clientX - rect.left) / rect.width;
+            audio.currentTime = percent * audio.duration;
+        }
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
         }
 
         async function loadGlobalOutputs() {
@@ -731,7 +1444,6 @@
                 const res = await fetch('/outputs/tracks');
                 if (!res.ok) throw new Error('Unable to load outputs');
                 const data = await res.json();
-                // Flatten produced list for the home card
                 globalOutputs = data.produced || [];
                 renderGlobalOutputs();
             } catch (err) {
@@ -743,7 +1455,7 @@
             const container = document.getElementById('global-outputs');
             if (!container) return;
             if (!globalOutputs.length) {
-                container.innerHTML = '<div style="display:flex; justify-content:space-between; align-items:center;"><h3 style="margin-top:0;">Recent renders</h3><a href="/static/multitrack_player.html" style="text-decoration:none; color:#2563eb;">Multi-Track Player ↗</a></div><p class="muted small">No renders found on disk.</p>';
+                container.innerHTML = '<div style="display:flex; justify-content:space-between; align-items:center;"><h3 style="margin-top:0;">Recent renders</h3><a href="/static/multitrack_player.html" style="text-decoration:none; color:var(--accent-primary);">Multi-Track Player ↗</a></div><p class="muted small">No renders found on disk.</p>';
                 return;
             }
             const items = globalOutputs.map(item => `
@@ -754,16 +1466,289 @@
                     </div>
                     <div style="display:flex; gap:8px;">
                         <button onclick="playAudio('${item.url}')" style="padding:4px 10px; font-size:0.85rem;">▶ Play</button>
-                        <a href="${item.url}" download style="padding:4px 10px; background:#10b981; color:#fff; border-radius:6px; text-decoration:none; font-size:0.85rem;">⬇ Download</a>
+                        <a href="${item.url}" download style="padding:4px 10px; background:var(--accent-green); color:#fff; border-radius:6px; text-decoration:none; font-size:0.85rem;">⬇ Download</a>
                     </div>
                 </div>
             `).join('');
-            container.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center;"><h3 style="margin-top:0;">Recent renders</h3><a href="/static/multitrack_player.html" style="text-decoration:none; color:#2563eb;">Multi-Track Player ↗</a></div><div class="list">${items}</div>`;
+            container.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center;"><h3 style="margin-top:0;">Recent renders</h3><a href="/static/multitrack_player.html" style="text-decoration:none; color:var(--accent-primary);">Multi-Track Player ↗</a></div><div class="list">${items}</div>`;
         }
 
-        // Initial load
-        loadGlobalOutputs();
+        // ==================== INITIALIZATION ====================
 
+        // Load all projects from backend
+        async function loadProjects() {
+            try {
+                const res = await fetch(`${API_URL}/projects`);
+                if (!res.ok) throw new Error('Unable to load projects');
+                const data = await res.json();
+
+                // Clear existing projects
+                Object.keys(projectStore).forEach(key => delete projectStore[key]);
+                projectOrder.length = 0;
+
+                // Load all projects
+                if (data.projects && data.projects.length > 0) {
+                    data.projects.forEach(projectData => {
+                        ensureProjectEntry(projectData);
+                    });
+                }
+
+                renderProjects();
+            } catch (err) {
+                console.error('Failed to load projects:', err);
+            }
+        }
+
+        // Debounce helper
+        // Cost estimator functions
+        function calculateCost(charCount, project = null) {
+            if (charCount === 0) return { min: 0, max: 0, breakdown: [] };
+
+            const chars_in_thousands = charCount / 1000;
+            let minCost = 0;
+            let maxCost = 0;
+            const breakdown = [];
+
+            // If project has characters with voice assignments, use those
+            if (project && project.characters && project.characters.length > 0) {
+                // Calculate based on actual character assignments
+                const engines = new Set();
+                project.characters.forEach(char => {
+                    const voice = char.override_voice || char.default_voice || '';
+                    const engine = voice.split(':')[0] || 'kokoro';
+                    engines.add(engine.toLowerCase());
+                });
+
+                // Use the most expensive engine found for max, cheapest for min
+                engines.forEach(engine => {
+                    const rate = COST_RATES[engine] || COST_RATES.kokoro;
+                    minCost = Math.max(minCost, rate.min * chars_in_thousands);
+                    maxCost = Math.max(maxCost, rate.max * chars_in_thousands);
+                    breakdown.push({ engine: rate.label, min: rate.min * chars_in_thousands, max: rate.max * chars_in_thousands });
+                });
+            } else {
+                // No project or characters - show range from cheapest to most expensive
+                minCost = COST_RATES.kokoro.min * chars_in_thousands;
+                maxCost = COST_RATES.dia.max * chars_in_thousands;
+                breakdown.push({ engine: "Voice (Best case - Kokoro)", min: minCost, max: minCost });
+                breakdown.push({ engine: "Voice (Worst case - DiaTTS)", min: maxCost, max: maxCost });
+            }
+
+            // Add SFX and Music estimates (based on ~200 words/min, assuming 1 block per 500 words)
+            const estimatedMinutes = Math.max(1, Math.ceil(charCount / 1200)); // ~200 chars per minute
+            const estimatedBlocks = Math.max(1, Math.ceil(charCount / 3000)); // ~1 block per 500 words (~3000 chars)
+
+            const sfxMin = COST_RATES.sfx.min * estimatedBlocks;
+            const sfxMax = COST_RATES.sfx.max * estimatedBlocks;
+            const musicMin = COST_RATES.music.min * estimatedMinutes;
+            const musicMax = COST_RATES.music.max * estimatedMinutes;
+
+            breakdown.push({ engine: "SFX", min: sfxMin, max: sfxMax });
+            breakdown.push({ engine: "Music", min: musicMin, max: musicMax });
+
+            // Add to total
+            minCost += sfxMin + musicMin;
+            maxCost += sfxMax + musicMax;
+
+            return { min: minCost, max: maxCost, breakdown };
+        }
+
+        function toggleCostBreakdown() {
+            const breakdownEl = document.getElementById('cost-breakdown');
+            const toggleBtn = document.getElementById('cost-breakdown-toggle');
+            if (breakdownEl.style.display === 'none') {
+                breakdownEl.style.display = 'block';
+                toggleBtn.textContent = '▾';
+            } else {
+                breakdownEl.style.display = 'none';
+                toggleBtn.textContent = '▸';
+            }
+        }
+
+        function updateCostEstimate(charCount) {
+            const project = currentOpenProject ? projectStore[currentOpenProject] : null;
+            const cost = calculateCost(charCount, project);
+
+            // Format cost display
+            let costText;
+            if (cost.min === cost.max) {
+                costText = `💰 $${cost.min.toFixed(3)}`;
+            } else {
+                costText = `💰 $${cost.min.toFixed(3)} - $${cost.max.toFixed(3)}`;
+            }
+
+            // Color code based on cost
+            const costRangeEl = document.getElementById('cost-range');
+            costRangeEl.textContent = costText;
+            if (cost.max < 0.50) {
+                costRangeEl.style.color = '#10b981'; // green
+            } else if (cost.max < 2.00) {
+                costRangeEl.style.color = '#f59e0b'; // yellow
+            } else if (cost.max < 5.00) {
+                costRangeEl.style.color = '#f97316'; // orange
+            } else {
+                costRangeEl.style.color = '#ef4444'; // red
+            }
+
+            // Update breakdown
+            const detailsEl = document.getElementById('cost-details');
+            let breakdownHTML = '';
+            cost.breakdown.forEach(item => {
+                const itemCost = item.min === item.max
+                    ? `$${item.min.toFixed(3)}`
+                    : `$${item.min.toFixed(3)} - $${item.max.toFixed(3)}`;
+                breakdownHTML += `<div>• ${item.engine}: ${itemCost}</div>`;
+            });
+            breakdownHTML += `<div style="margin-top:8px; padding-top:8px; border-top:1px solid var(--border); font-weight:600;">• Total: $${cost.min.toFixed(3)} - $${cost.max.toFixed(3)}</div>`;
+            detailsEl.innerHTML = breakdownHTML;
+
+            // Console log for tracking
+            console.log(`[Cost Estimator] Characters: ${charCount}, Min: $${cost.min.toFixed(3)}, Max: $${cost.max.toFixed(3)}`);
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        // Auto-save function
+        const autoSave = debounce(async () => {
+            // Only auto-save if a project is currently selected
+            if (!currentOpenProject) {
+                // If no project is selected and editor has content, show "Save Project" button
+                const editor = document.getElementById('script-editor');
+                if (editor.value.trim()) {
+                    document.getElementById('new-project-btn').style.display = 'none';
+                    document.getElementById('save-project-btn').style.display = 'block';
+                } else {
+                    document.getElementById('new-project-btn').style.display = 'block';
+                    document.getElementById('save-project-btn').style.display = 'none';
+                }
+                return;
+            }
+
+            const editor = document.getElementById('script-editor');
+            const fullText = editor.value; // Keep newlines
+
+            // Extract title from first line
+            const lines = fullText.split('\n');
+            let title = 'Untitled Project';
+            let text = fullText;
+
+            if (lines[0].trim().startsWith('#')) {
+                title = lines[0].replace(/^#+\s*/, '').trim();
+                // Capitalize first letter
+                if (title && title.length > 0) {
+                    title = title.charAt(0).toUpperCase() + title.slice(1);
+                }
+            } else if (lines[0].trim()) {
+                title = lines[0].trim();
+            }
+
+            try {
+                await fetch(`${API_URL}/projects/${currentOpenProject}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, text })
+                });
+                // Update local store silently
+                if (projectStore[currentOpenProject]) {
+                    projectStore[currentOpenProject].title = title;
+                    projectStore[currentOpenProject].raw_text = text;
+                    renderProjects(); // Update sidebar title
+                }
+            } catch (err) {
+                console.error('Auto-save failed:', err);
+            }
+        }, 1000);
+
+        // Dark Mode Toggle
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+
+            // Update icon
+            const toggle = document.querySelector('.dark-mode-toggle');
+            toggle.textContent = isDark ? '☀️' : '🌙';
+        }
+
+        // Initialize dark mode from localStorage
+        function initDarkMode() {
+            const darkMode = localStorage.getItem('darkMode');
+            if (darkMode === 'enabled') {
+                document.body.classList.add('dark-mode');
+                const toggle = document.querySelector('.dark-mode-toggle');
+                if (toggle) toggle.textContent = '☀️';
+            }
+        }
+
+        // Auto-capitalize first letter of first line
+        function capitalizeFirstLine() {
+            const editor = document.getElementById('script-editor');
+            const lines = editor.value.split('\n');
+
+            if (lines.length > 0 && lines[0].trim()) {
+                const firstLine = lines[0];
+                // Check if it starts with #
+                const match = firstLine.match(/^(#+\s*)(.+)$/);
+                if (match) {
+                    const prefix = match[1]; // "# " or "## ", etc.
+                    const text = match[2];
+                    if (text.length > 0) {
+                        const capitalized = text.charAt(0).toUpperCase() + text.slice(1);
+                        if (capitalized !== text) {
+                            lines[0] = prefix + capitalized;
+                            const cursorPos = editor.selectionStart;
+                            editor.value = lines.join('\n');
+                            editor.selectionStart = editor.selectionEnd = cursorPos;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Initialize editor handlers
+        document.addEventListener('DOMContentLoaded', () => {
+            initDarkMode();
+            loadProjects();
+            loadGlobalOutputs();
+
+            const editor = document.getElementById('script-editor');
+
+            // Auto-save on input
+            editor.addEventListener('input', () => {
+                autoSave();
+
+                // Update text stats
+                const text = editor.value;
+                const charCount = text.length;
+                const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+
+                document.getElementById('script-char-count').textContent = `${charCount} character${charCount !== 1 ? 's' : ''}`;
+                document.getElementById('script-word-count').textContent = `${wordCount} word${wordCount !== 1 ? 's' : ''}`;
+
+                // Update cost estimate
+                updateCostEstimate(charCount);
+
+                console.log(`[Studio] Script stats - Characters: ${charCount}, Words: ${wordCount}`);
+            });
+
+            // Capitalize first letter when user moves to next line or leaves the field
+            editor.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    setTimeout(capitalizeFirstLine, 10);
+                }
+            });
+
+            editor.addEventListener('blur', capitalizeFirstLine);
+
+            // Trigger initial stats count
+            editor.dispatchEvent(new Event('input'));
+        });
     </script>
 </body>
 

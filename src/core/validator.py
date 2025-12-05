@@ -52,19 +52,15 @@ class ValidationResult:
 class ABMLValidator:
     """Validates ABML scenes for quality issues"""
     
-    # Words that shouldn't appear in dialogue/narration text
+    # Words that might indicate stage directions (removed common dialogue verbs like 'said', 'asked' to avoid false positives)
     STAGE_DIRECTION_WORDS = [
-        'said', 'says', 'saying',
         'shouted', 'shouts', 'shouting',
         'whispered', 'whispers', 'whispering',
         'exclaimed', 'exclaims', 'exclaiming',
-        'asked', 'asks', 'asking',
-        'replied', 'replies', 'replying',
         'murmured', 'murmurs', 'murmuring',
         'yelled', 'yells', 'yelling',
         'screamed', 'screams', 'screaming',
         'muttered', 'mutters', 'muttering',
-        'called', 'calls', 'calling',
         'cried', 'cries', 'crying'
     ]
     
@@ -83,7 +79,7 @@ class ABMLValidator:
         result = ValidationResult()
         
         if not scene.blocks:
-            result.add_error("Scene has no blocks", severity=50)
+            result.add_error("Scene has no content", severity=50)
             return result
         
         for i, block in enumerate(scene.blocks):
@@ -94,10 +90,10 @@ class ABMLValidator:
         narration_blocks = sum(1 for b in scene.blocks if b.narration)
         
         if narration_blocks == 0:
-            result.add_warning("No narration/dialogue blocks found")
+            result.add_warning("No narration/dialogue found")
         
         if narration_blocks < total_blocks * 0.5:
-            result.add_warning(f"Only {narration_blocks}/{total_blocks} blocks have narration")
+            result.add_warning(f"Only {narration_blocks}/{total_blocks} lines have text")
         
         return result
     
@@ -109,10 +105,11 @@ class ABMLValidator:
         
         text = block.narration.text
         speaker = block.narration.speaker
+        line_num = index + 1
         
         # Check 1: Empty text
         if not text or not text.strip():
-            result.add_error(f"Block {index} ({speaker}): Empty text", severity=30)
+            result.add_error(f"Line {line_num} ({speaker}): Empty text", severity=30)
             return
         
         # Check 2: Stage directions in text
@@ -120,16 +117,25 @@ class ABMLValidator:
         found_directions = []
         
         for word in self.STAGE_DIRECTION_WORDS:
-            if f" {word} " in f" {text_lower} ":
+            # Check for word with surrounding spaces or punctuation
+            if f" {word} " in f" {text_lower} " or f" {word}." in f" {text_lower} " or f" {word}," in f" {text_lower} ":
                 found_directions.append(word)
         
         if found_directions:
-            result.add_error(
-                f"Block {index} ({speaker}): Stage directions found: {', '.join(found_directions)}",
-                severity=20
+            word_list = ', '.join(f"'{w}'" for w in found_directions)
+            result.add_warning(
+                f"Line {line_num} ({speaker}): Possible stage direction detected: {word_list}",
+                severity=10
             )
-            # Add clarification entry so UI can surface it for rewrite
-            result.add_clarification(index, speaker, text, f"Contains: {', '.join(found_directions)}")
+            # Add clarification entry with better context
+            # Truncate text to ~60 chars for readability
+            snippet = text[:60] + "..." if len(text) > 60 else text
+            result.add_clarification(
+                index, 
+                speaker, 
+                text,  # Full text for copy functionality
+                f"**{speaker}**: \"{snippet}\" — Contains {word_list}. Is this dialogue or a stage direction?"
+            )
         
         # Check 3: Emotion adverbs (less severe)
         found_adverbs = []
@@ -138,8 +144,9 @@ class ABMLValidator:
                 found_adverbs.append(adverb)
         
         if found_adverbs:
+            adverb_list = ', '.join(f"'{w}'" for w in found_adverbs)
             result.add_warning(
-                f"Block {index} ({speaker}): Emotion words in text: {', '.join(found_adverbs)}",
+                f"Line {line_num} ({speaker}): Emotion words detected: {adverb_list}",
                 severity=5
             )
         

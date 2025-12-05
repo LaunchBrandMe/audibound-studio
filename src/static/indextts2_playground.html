@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sesame Playground</title>
+    <title>IndexTTS2 Playground</title>
     <link rel="stylesheet" href="/static/styles.css">
     <style>
         /* Dark Mode Support */
@@ -315,29 +315,29 @@
 
     <div class="page-shell">
         <header style="margin-bottom: 32px;">
-            <h1 style="margin: 0; font-size: clamp(1.9rem, 2.5vw, 2.6rem);">🌱 Sesame Playground</h1>
-            <p style="margin: 8px 0 0 0; color: var(--muted); font-size: 1.05rem;">Experiment with voice gestures and
-                inline tags to trigger laughs, pauses, stutters, and more.</p>
+            <h1 style="margin: 0; font-size: clamp(1.9rem, 2.5vw, 2.6rem);">📡 IndexTTS2 Playground</h1>
+            <p style="margin: 8px 0 0 0; color: var(--muted); font-size: 1.05rem;">High-quality expressive TTS with
+                advanced voice control and natural intonation.</p>
         </header>
 
         <div class="card voice-select-container">
             <label for="voice-select">Reference Voice</label>
             <select id="voice-select">
-                <option value="">Use base Sesame voice</option>
+                <option value="">Use base IndexTTS2 voice</option>
             </select>
             <button class="secondary-btn" onclick="refreshVoices()" style="margin-top:8px;">🔄 Refresh Voices</button>
         </div>
 
         <div class="card">
-            <h3 style="margin: 0 0 16px 0; font-size: 1.15rem; color: var(--text);">Voice Gestures & Tags</h3>
+            <h3 style="margin: 0 0 16px 0; font-size: 1.15rem; color: var(--text);">Advanced Voice Controls</h3>
             <div class="token-grid">
-                <button class="token-btn" onclick="insertToken('[laughs softly]')">😊 Laugh softly</button>
-                <button class="token-btn" onclick="insertToken('[laughs loudly]')">😂 Laugh loudly</button>
-                <button class="token-btn" onclick="insertToken('[sighs]')">😮‍💨 Sigh</button>
-                <button class="token-btn" onclick="insertToken('[clears throat]')">🗣️ Clear throat</button>
-                <button class="token-btn" onclick="insertToken('[stutters]')">🗨️ Stutter</button>
-                <button class="token-btn" onclick="insertToken('[whispers]')">🤫 Whisper</button>
-                <button class="token-btn" onclick="insertToken('[humms]')">🎵 Hum</button>
+                <button class="token-btn" onclick="insertToken('[cheerful]')">😊 Cheerful</button>
+                <button class="token-btn" onclick="insertToken('[somber]')">😞 Somber</button>
+                <button class="token-btn" onclick="insertToken('[intense]')">💪 Intense</button>
+                <button class="token-btn" onclick="insertToken('[gentle]')">🌸 Gentle</button>
+                <button class="token-btn" onclick="insertToken('[urgent]')">⚡ Urgent</button>
+                <button class="token-btn" onclick="insertToken('[soft]')">🤫 Soft</button>
+                <button class="token-btn" onclick="insertToken('[dramatic]')">🎭 Dramatic</button>
                 <button class="token-btn" onclick="insertToken('[pause 1s]')">⏸️ Pause 1s</button>
             </div>
 
@@ -345,7 +345,7 @@
                 style="display: block; font-size: 0.9rem; color: var(--muted); margin-bottom: 8px; font-weight: 600;">Your
                 Script</label>
             <textarea id="prompt"
-                placeholder="[0] Hello there. [laughs softly] I can switch into a whisper whenever you like. [whispers] This is our secret.">[0] Hello there. [laughs softly] I can switch into a whisper whenever you like. [whispers] This is our secret.</textarea>
+                placeholder="[cheerful] Hello there. Advanced voice control with natural intonation.">Hello! This is a test of the IndexTTS2 voice engine.</textarea>
 
             <div id="text-stats"
                 style="font-size: 0.85rem; color: var(--muted); margin: 8px 0; font-family: monospace;">
@@ -363,11 +363,11 @@
             <div class="help-text">
                 <h3>📘 Quick Reference</h3>
                 <ul>
-                    <li>Use <code>[0]</code> at the start to set the speaker/voice</li>
-                    <li>Insert gestures like <code>[laughs softly]</code>, <code>[whispers]</code> anywhere in your text
+                    <li>Insert style tags like <code>[cheerful]</code>, <code>[dramatic]</code> for expressive control
                     </li>
                     <li>Use <code>[pause 2s]</code> to add silence (1-5 seconds)</li>
-                    <li>Stack multiple gestures for expressive readings</li>
+                    <li>IndexTTS2 provides advanced voice control with natural intonation</li>
+                    <li>Combine multiple style tags for nuanced expression</li>
                 </ul>
             </div>
         </div>
@@ -429,8 +429,8 @@
                 const res = await fetch(`${API_URL}/voices`);
                 const data = await res.json();
                 const voices = data.voices || [];
-                voiceSelect.innerHTML = '<option value="">Use base Sesame voice</option>';
-                voices.filter(v => (v.engine || '').toLowerCase() === 'sesame')
+                voiceSelect.innerHTML = '<option value="">Use base IndexTTS2 voice</option>';
+                voices.filter(v => (v.engine || '').toLowerCase() === 'indextts2')
                     .forEach(v => {
                         const opt = document.createElement('option');
                         opt.value = v.id;
@@ -473,7 +473,7 @@
             const controller = new AbortController();
             currentAbort = controller;
             try {
-                const response = await fetch(`${API_URL}/playground/sesame/generate`, {
+                const response = await fetch(`${API_URL}/playground/indextts2/generate`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ text, voice_id: voiceSelect.value || null }),
@@ -510,7 +510,7 @@
             document.getElementById('char-count').textContent = `${charCount} character${charCount !== 1 ? 's' : ''}`;
             document.getElementById('word-count').textContent = `${wordCount} word${wordCount !== 1 ? 's' : ''}`;
 
-            console.log(`[Sesame] Text stats - Characters: ${charCount}, Words: ${wordCount}`);
+            console.log(`[IndexTTS2] Text stats - Characters: ${charCount}, Words: ${wordCount}`);
         });
 
         // Trigger initial count

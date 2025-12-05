@@ -23,6 +23,7 @@ class AudioLayer(BaseModel):
     enabled: bool = True
     file_path: Optional[str] = None
     volume: float = 1.0
+    start_time_ms: Optional[int] = None
 
 class VoiceLayer(AudioLayer):
     speaker: str
