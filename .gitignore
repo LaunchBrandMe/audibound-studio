@@ -27,3 +27,6 @@ test_*.sh
 minimal_test.md
 simple_dialogue_test.md
 test_emotional_story.md
+
+# Cost tracking data
+cost_tracking.json
